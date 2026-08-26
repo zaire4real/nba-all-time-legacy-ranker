@@ -37,6 +37,7 @@ label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
 input,select{width:100%;min-height:44px;background:#0c1119;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;outline:none}
 input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .btn{appearance:none;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:10px 12px;min-height:42px}.btn.primary{background:var(--accent);color:#07101e;border-color:var(--accent);font-weight:800}.btn.ghost{background:transparent;color:var(--muted)}
+.playerFinder{position:relative}.playerSuggestions{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 6px);max-height:310px;overflow:auto;border:1px solid #39465a;border-radius:11px;background:#101722;box-shadow:0 18px 42px rgba(0,0,0,.42);padding:5px;-webkit-overflow-scrolling:touch}.playerSuggestion{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:44px;padding:9px 10px;border-radius:8px;color:var(--text);cursor:pointer}.playerSuggestion:hover,.playerSuggestion.active{background:#223047}.playerSuggestion strong{font-size:14px}.playerSuggestion span{color:var(--muted);font-size:11px;white-space:nowrap}.playerSuggestion.emptySuggestion{color:var(--muted);cursor:default;justify-content:center}
 .controls{margin-bottom:14px}.meta{color:var(--muted);font-size:12px}.statusline{padding-top:11px;color:var(--muted)}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:var(--panel);-webkit-overflow-scrolling:touch}
 table{width:100%;border-collapse:collapse;min-width:940px}th,td{padding:10px 11px;border-bottom:1px solid #242d3a;text-align:right;white-space:nowrap}th{position:sticky;top:0;z-index:2;background:#171e2a;color:#b9c4d0;font-size:11px;text-transform:uppercase;letter-spacing:.045em}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}tbody tr:hover{background:#151c27}.rank{font-weight:850}.top3{color:var(--warn)}
@@ -103,8 +104,8 @@ table{width:100%;border-collapse:collapse;min-width:940px}th,td{padding:10px 11p
 
   <section id="compare" class="panel">
     <div class="card flat" style="margin-bottom:14px"><div class="grid">
-      <div class="span6"><label for="p1" data-i18n="playerA">球員 A</label><select id="p1"></select></div>
-      <div class="span6"><label for="p2" data-i18n="playerB">球員 B</label><select id="p2"></select></div>
+      <div class="span6"><label for="p1Search" data-i18n="playerA">球員 A</label><div class="playerFinder"><input id="p1Search" type="search" data-ph="compareSearchPlaceholder" placeholder="輸入球員姓名搜尋…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="p1Suggestions"><div id="p1Suggestions" class="playerSuggestions" role="listbox" hidden></div></div></div>
+      <div class="span6"><label for="p2Search" data-i18n="playerB">球員 B</label><div class="playerFinder"><input id="p2Search" type="search" data-ph="compareSearchPlaceholder" placeholder="輸入球員姓名搜尋…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="p2Suggestions"><div id="p2Suggestions" class="playerSuggestions" role="listbox" hidden></div></div></div>
     </div></div>
     <div class="grid">
       <div class="span6 card" id="card1"></div><div class="span6 card" id="card2"></div>
@@ -157,6 +158,8 @@ Object.assign(I18N.en,{
  prod3:'SPG + BPG uses only games with official tracking; if fewer than half of career seasons are observable, that point is excluded and the category is renormalized.',
  era3:'The core-title proxy still uses career résumé rather than a title-by-title role label. This is a transparent adjustable index, not an official NBA or scientifically proven verdict.',
  era4:'2025-26 PER / WS / WS/48 / BPM / VORP are context only and are not scored. Differences below one point should not be read as a definitive separation.',
+ compareSearchPlaceholder:'Type a player name to search…',
+ noPlayerMatches:'No matching players',
  foot:'Sources: public Basketball-Reference-derived datasets, corrected against NBA.com award and player championship records. Latest audit: 2026-08-26.'
 });
 Object.assign(I18N['zh-Hant'],{
@@ -167,6 +170,8 @@ Object.assign(I18N['zh-Hant'],{
  prod3:'SPG + BPG 僅以有正式記錄的場次計算；若少於半數生涯賽季可觀測，該 1 點會排除並重新正規化。',
  era3:'「核心冠軍代理值」仍使用生涯履歷，不是逐年角色判定；此排名是可調權重的透明指數，不是 NBA 官方或經科學證明的定論。',
  era4:'2025-26 PER / WS / WS/48 / BPM / VORP 僅作資訊展示，不納入總分；差距小於 1 分時不應解讀為明確高下。',
+ compareSearchPlaceholder:'輸入球員姓名搜尋…',
+ noPlayerMatches:'沒有符合的球員',
  foot:'資料來源：公開 Basketball-Reference 衍生資料集，另依 NBA.com 公開獎項與球員冠軍履歷校正。最新審計：2026-08-26。'
 });
 Object.assign(I18N['zh-Hans'],{
@@ -177,11 +182,14 @@ Object.assign(I18N['zh-Hans'],{
  prod3:'SPG + BPG 仅按有正式记录的场次计算；若少于半数生涯赛季可观测，该 1 点会排除并重新归一化。',
  era3:'“核心冠军代理值”仍使用生涯履历，不是逐年角色判定；此排名是可调权重的透明指数，不是 NBA 官方或经科学证明的定论。',
  era4:'2025-26 PER / WS / WS/48 / BPM / VORP 仅作信息展示，不纳入总分；差距小于 1 分时不应解读为明确高下。',
+ compareSearchPlaceholder:'输入球员姓名搜索…',
+ noPlayerMatches:'没有符合的球员',
  foot:'数据来源：公开 Basketball-Reference 衍生数据集，另依据 NBA.com 公开奖项与球员冠军履历校正。最新审计：2026-08-26。'
 });
 let lang='zh-Hant';
 const defaultWeights={peak:25,playoff:25,sustained:20,defense:10,longevity:10,production:10};
 let weights={...defaultWeights},players=[],sorted=[],top100=[],page=1,pageSize=50,advancedLoaded=false;
+const compareSelection={p1Search:null,p2Search:null};
 function t(k){return (I18N[lang]&&I18N[lang][k])||I18N['en'][k]||k}
 function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.*’']/g,'').replace(/[^a-zA-Z0-9\s-]/g,'').replace(/\s+/g,' ').trim().toLowerCase()}
 function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
@@ -218,9 +226,33 @@ function renderRank(){if(!players.length)return;const data=currentRankRows();con
  document.getElementById('mobileRank').innerHTML=shown.length?shown.map(p=>{const r=rankOf(p);return `<div class="mrow"><div class="mrowTop"><div class="mrank">#${r}</div><div class="mname">${esc(p.name)}<div class="meta">${p.first_seas||'?'}–${p.last_seas||'?'}</div></div><div class="mscore">${p.s.total.toFixed(1)}</div></div><div class="mstats"><div class="mstat"><b>${p.mvp}</b><span>MVP</span></div><div class="mstat"><b>${p.fmvp}</b><span>FMVP</span></div><div class="mstat"><b>${p.champs}</b><span>${esc(t('titles'))}</span></div><div class="mstat"><b>${p.nba1}</b><span>NBA 1st</span></div><div class="mstat"><b>${p.allstar}</b><span>All-Star</span></div><div class="mstat"><b>${p.seasons}</b><span>${esc(t('seasons'))}</span></div></div></div>`}).join(''):`<div class="empty">${esc(t('noResults'))}</div>`;
  document.getElementById('pageInfo').textContent=`${t('showing')} ${data.length} · ${t('page')} ${page} ${t('of')} ${totalPages}`;document.getElementById('prevPage').disabled=page<=1;document.getElementById('nextPage').disabled=page>=totalPages;
 }
-function populateCompare(){const opts=players.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${esc(p.id)}">${esc(p.name)} (${p.first_seas||'?'}–${p.last_seas||'?'})</option>`).join('');const a=document.getElementById('p1'),b=document.getElementById('p2');a.innerHTML=opts;b.innerHTML=opts;const mj=players.find(p=>norm(p.name)==='michael jordan'),lbj=players.find(p=>norm(p.name)==='lebron james');if(mj)a.value=mj.id;if(lbj)b.value=lbj.id;a.addEventListener('change',renderCompare);b.addEventListener('change',renderCompare);renderCompare()}
+function playerSearchLabel(p){return `${p.name} (${p.first_seas||'?'}–${p.last_seas||'?'})`}
+function setComparePlayer(inputId,listId,p,shouldRender=true){
+ compareSelection[inputId]=String(p.id);const input=document.getElementById(inputId),list=document.getElementById(listId);input.value=playerSearchLabel(p);input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');list.hidden=true;if(shouldRender)renderCompare();
+}
+function setupPlayerSearch(inputId,listId,initialPlayer){
+ const input=document.getElementById(inputId),list=document.getElementById(listId),searchable=players.slice().sort((a,b)=>a.name.localeCompare(b.name)||num(a.first_seas)-num(b.first_seas));let matches=[],active=-1;
+ const close=()=>{list.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');active=-1};
+ const paintActive=()=>{list.querySelectorAll('[role="option"]').forEach((el,i)=>{const on=i===active;el.classList.toggle('active',on);el.setAttribute('aria-selected',String(on));if(on){input.setAttribute('aria-activedescendant',el.id);el.scrollIntoView({block:'nearest'})}})};
+ const show=(query=input.value)=>{
+  const q=norm(query);matches=searchable.filter(p=>!q||norm(playerSearchLabel(p)).includes(q)).sort((a,b)=>{if(!q)return 0;const an=norm(a.name),bn=norm(b.name),ar=an.startsWith(q)?0:an.split(' ').some(x=>x.startsWith(q))?1:2,br=bn.startsWith(q)?0:bn.split(' ').some(x=>x.startsWith(q))?1:2;return ar-br}).slice(0,12);active=-1;
+  list.innerHTML=matches.length?matches.map((p,i)=>`<div id="${listId}-option-${i}" class="playerSuggestion" role="option" aria-selected="false" data-player-id="${esc(p.id)}"><strong>${esc(p.name)}</strong><span>${p.first_seas||'?'}–${p.last_seas||'?'}</span></div>`).join(''):`<div class="playerSuggestion emptySuggestion">${esc(t('noPlayerMatches'))}</div>`;
+  list.hidden=false;input.setAttribute('aria-expanded','true');
+ };
+ input.addEventListener('focus',()=>{input.select();show('')});
+ input.addEventListener('input',()=>{compareSelection[inputId]=null;show()});
+ input.addEventListener('keydown',event=>{
+  if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();if(list.hidden)show();if(!matches.length)return;active=event.key==='ArrowDown'?Math.min(matches.length-1,active+1):Math.max(0,active<0?matches.length-1:active-1);paintActive()}
+  else if(event.key==='Enter'&&matches.length){event.preventDefault();setComparePlayer(inputId,listId,matches[active>=0?active:0])}
+  else if(event.key==='Escape')close();
+ });
+ list.addEventListener('pointerdown',event=>{const option=event.target.closest('[data-player-id]');if(!option)return;event.preventDefault();const p=players.find(item=>String(item.id)===option.dataset.playerId);if(p)setComparePlayer(inputId,listId,p)});
+ input.addEventListener('blur',()=>setTimeout(close,120));
+ if(initialPlayer)setComparePlayer(inputId,listId,initialPlayer,false);
+}
+function populateCompare(){const mj=players.find(p=>norm(p.name)==='michael jordan'),lbj=players.find(p=>norm(p.name)==='lebron james');setupPlayerSearch('p1Search','p1Suggestions',mj||players[0]);setupPlayerSearch('p2Search','p2Suggestions',lbj||players[1]);renderCompare()}
 function playerCard(p,other){const win=p.s.total>other.s.total;const adv=[['PER',p.per],['WS',p.ws],['WS/48',p.ws48],['BPM',p.bpm],['VORP',p.vorp]].filter(x=>x[1]!==null&&x[1]!==undefined);return `<div class="compareHeader"><div><div class="name">${esc(p.name)}</div><div class="meta">${p.first_seas||'?'}–${p.last_seas||'?'} · ${p.seasons} ${esc(t('seasonWord'))}</div></div></div><div class="score ${win?'winner':''}">${p.s.total.toFixed(1)} <small>/ 100</small></div><div class="pills"><span class="pill"><strong>${p.mvp}</strong> MVP</span><span class="pill"><strong>${p.fmvp}</strong> FMVP</span><span class="pill"><strong>${p.champs}</strong> ${esc(t('champWord'))}</span><span class="pill"><strong>${p.nba1}</strong> NBA 1st</span><span class="pill"><strong>${p.allstar}</strong> All-Star</span></div>${adv.length?`<div class="advGrid">${adv.map(([k,v])=>`<div class="adv"><b>${Number(v).toFixed(k==='WS/48'?3:1)}</b><span>${k}</span></div>`).join('')}</div><div class="quality">${esc(t('advanced'))}</div>`:`<div class="quality">${esc(t('noAdvanced'))}</div>`}`}
-function renderCompare(){if(!players.length)return;const a=players.find(p=>String(p.id)===document.getElementById('p1').value),b=players.find(p=>String(p.id)===document.getElementById('p2').value);if(!a||!b)return;document.getElementById('card1').innerHTML=playerCard(a,b);document.getElementById('card2').innerHTML=playerCard(b,a);document.getElementById('h1').textContent=a.name;document.getElementById('h2').textContent=b.name;
+function renderCompare(){if(!players.length)return;const a=players.find(p=>String(p.id)===compareSelection.p1Search),b=players.find(p=>String(p.id)===compareSelection.p2Search);if(!a||!b)return;document.getElementById('card1').innerHTML=playerCard(a,b);document.getElementById('card2').innerHTML=playerCard(b,a);document.getElementById('h1').textContent=a.name;document.getElementById('h2').textContent=b.name;
  const cats=[['peak',t('peak')],['playoff',t('playoff')],['sustained',t('sustained')],['defense',t('defense')],['longevity',t('longevity')],['production',t('production')]];
  document.getElementById('breakdown').innerHTML=cats.map(([k,label])=>{const av=a.s[k],bv=b.s[k];return `<div class="metricGroup"><div class="metricTitle"><b>${esc(label)}</b><span>${weights[k]}× weight</span></div><div class="metricRow"><div>${esc(a.name)}</div><div class="bar"><div class="fillA" style="width:${av===null?0:Math.max(0,Math.min(100,av))}%"></div></div><div>${av===null?'N/A':av.toFixed(1)}</div></div><div class="metricRow"><div>${esc(b.name)}</div><div class="bar"><div class="fillB" style="width:${bv===null?0:Math.max(0,Math.min(100,bv))}%"></div></div><div>${bv===null?'N/A':bv.toFixed(1)}</div></div></div>`}).join('');
  const rows=[['MVP','mvp'],['FMVP','fmvp'],[t('titles'),'champs'],['All-NBA 1st','nba1'],['All-NBA 2nd','nba2'],['All-NBA 3rd','nba3'],['DPOY','dpoy'],['All-Defense 1st','def1'],['All-Defense 2nd','def2'],['All-Star','allstar'],[t('seasons'),'seasons'],['Career PPG','ppg'],['Career RPG','rpg'],['Career APG','apg'],['2025-26 PER','per'],['2025-26 WS','ws'],['2025-26 WS/48','ws48'],['2025-26 BPM','bpm'],['2025-26 VORP','vorp']];
