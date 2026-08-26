@@ -87,6 +87,9 @@ def main() -> None:
             "rpg": 0,
             "spg": 0,
             "bpg": 0,
+            "fmvp_eligible_seasons": 0,
+            "defense_eligible_seasons": 0,
+            "stocks_eligible_seasons": 0,
             "mvp": 0,
             "fmvp": 0,
             "champs": 0,
@@ -112,18 +115,47 @@ def main() -> None:
             season_groups[(player_id, integer(row.get("season")), league)].append(row)
 
     accumulated: dict[str, dict[str, object]] = defaultdict(
-        lambda: {"g": 0.0, "pts": 0.0, "trb": 0.0, "ast": 0.0, "stl": 0.0, "blk": 0.0, "seasons": set()}
+        lambda: {
+            "g": 0.0,
+            "pts": 0.0,
+            "trb": 0.0,
+            "ast": 0.0,
+            "tracked_g": 0.0,
+            "tracked_stl": 0.0,
+            "tracked_blk": 0.0,
+            "seasons": set(),
+            "fmvp_eligible_seasons": set(),
+            "defense_eligible_seasons": set(),
+            "stocks_eligible_seasons": set(),
+        }
     )
-    for (player_id, season, _league), rows in season_groups.items():
+    for (player_id, season, league), rows in season_groups.items():
         total = select_total_row(rows)
         selected = [total] if total else rows
         bucket = accumulated[player_id]
         for row in selected:
-            for field in ("g", "pts", "trb", "ast", "stl", "blk"):
+            for field in ("g", "pts", "trb", "ast"):
                 bucket[field] = float(bucket[field]) + number(row.get(field))
+            stocks_are_tracked = all(row.get(field) not in {"", "NA", None} for field in ("stl", "blk"))
+            if stocks_are_tracked:
+                bucket["tracked_g"] = float(bucket["tracked_g"]) + number(row.get("g"))
+                bucket["tracked_stl"] = float(bucket["tracked_stl"]) + number(row.get("stl"))
+                bucket["tracked_blk"] = float(bucket["tracked_blk"]) + number(row.get("blk"))
         cast_seasons = bucket["seasons"]
         assert isinstance(cast_seasons, set)
         cast_seasons.add(season)
+        if league == "NBA" and season >= 1969:
+            cast_fmvp = bucket["fmvp_eligible_seasons"]
+            assert isinstance(cast_fmvp, set)
+            cast_fmvp.add(season)
+        if (league == "NBA" and season >= 1969) or (league == "ABA" and season >= 1973):
+            cast_defense = bucket["defense_eligible_seasons"]
+            assert isinstance(cast_defense, set)
+            cast_defense.add(season)
+        if any(all(row.get(field) not in {"", "NA", None} for field in ("stl", "blk")) for row in selected):
+            cast_stocks = bucket["stocks_eligible_seasons"]
+            assert isinstance(cast_stocks, set)
+            cast_stocks.add(season)
 
     for player_id, bucket in accumulated.items():
         player = players[player_id]
@@ -132,9 +164,20 @@ def main() -> None:
             player["ppg"] = round(float(bucket["pts"]) / games, 3)
             player["rpg"] = round(float(bucket["trb"]) / games, 3)
             player["apg"] = round(float(bucket["ast"]) / games, 3)
-            player["spg"] = round(float(bucket["stl"]) / games, 3)
-            player["bpg"] = round(float(bucket["blk"]) / games, 3)
-        player["seasons"] = len(bucket["seasons"])
+        tracked_games = float(bucket["tracked_g"])
+        if tracked_games:
+            player["spg"] = round(float(bucket["tracked_stl"]) / tracked_games, 3)
+            player["bpg"] = round(float(bucket["tracked_blk"]) / tracked_games, 3)
+        seasons = bucket["seasons"]
+        assert isinstance(seasons, set)
+        player["seasons"] = len(seasons)
+        if seasons:
+            player["first_seas"] = min(seasons)
+            player["last_seas"] = max(seasons)
+        for field in ("fmvp_eligible_seasons", "defense_eligible_seasons", "stocks_eligible_seasons"):
+            eligible = bucket[field]
+            assert isinstance(eligible, set)
+            player[field] = len(eligible)
 
     for player in players.values():
         if not player["seasons"] and player["first_seas"] and player["last_seas"]:
@@ -207,10 +250,10 @@ def main() -> None:
     patch(["Scottie Barnes", "Cason Wallace", "Bam Adebayo", "OG Anunoby", "Dyson Daniels"], "def2")
 
     champions = {
-        2023: ["Bruce Brown", "Thomas Bryant", "Kentavious Caldwell-Pope", "Vlatko Čančar", "Aaron Gordon", "Jeff Green", "Reggie Jackson", "Nikola Jokić", "DeAndre Jordan", "Jamal Murray", "Zeke Nnaji", "Michael Porter Jr.", "Ish Smith", "Peyton Watson", "Jack White"],
-        2024: ["Oshae Brissett", "Jaylen Brown", "JD Davison", "Sam Hauser", "Jrue Holiday", "Al Horford", "Luke Kornet", "Svi Mykhailiuk", "Drew Peterson", "Kristaps Porziņģis", "Payton Pritchard", "Neemias Queta", "Jayson Tatum", "Xavier Tillman Sr.", "Jordan Walsh", "Derrick White"],
-        2025: ["Shai Gilgeous-Alexander", "Jalen Williams", "Chet Holmgren", "Luguentz Dort", "Alex Caruso", "Isaiah Hartenstein", "Isaiah Joe", "Cason Wallace", "Aaron Wiggins", "Jaylin Williams", "Kenrich Williams", "Ousmane Dieng", "Branden Carlson", "Alex Ducas", "Adam Flagler"],
-        2026: ["Jose Alvarado", "OG Anunoby", "Mikal Bridges", "Jalen Brunson", "Jordan Clarkson", "Pacome Dadiet", "Mohamed Diawara", "Tosan Evbuomwan", "Josh Hart", "Miles McBride", "Mitchell Robinson", "Karl-Anthony Towns", "Tyler Kolek", "Landry Shamet", "Ariel Hukporti", "Guerschon Yabusele", "Jeremy Sochan", "Kevin McCullar Jr."],
+        2023: ["Bruce Brown", "Thomas Bryant", "Kentavious Caldwell-Pope", "Vlatko Čančar", "Aaron Gordon", "Christian Braun", "Jeff Green", "Reggie Jackson", "Nikola Jokić", "DeAndre Jordan", "Jamal Murray", "Zeke Nnaji", "Michael Porter Jr.", "Ish Smith", "Peyton Watson", "Jack White"],
+        2024: ["Oshae Brissett", "Jaylen Brown", "JD Davison", "Sam Hauser", "Jrue Holiday", "Al Horford", "Luke Kornet", "Svi Mykhailiuk", "Drew Peterson", "Kristaps Porziņģis", "Payton Pritchard", "Neemias Queta", "Jaden Springer", "Jayson Tatum", "Xavier Tillman Sr.", "Jordan Walsh", "Derrick White"],
+        2025: ["Shai Gilgeous-Alexander", "Jalen Williams", "Chet Holmgren", "Luguentz Dort", "Alex Caruso", "Isaiah Hartenstein", "Isaiah Joe", "Cason Wallace", "Aaron Wiggins", "Jaylin Williams", "Kenrich Williams", "Ousmane Dieng", "Branden Carlson", "Alex Ducas", "Adam Flagler", "Ajay Mitchell", "Dillon Jones", "Nikola Topić"],
+        2026: ["Jose Alvarado", "OG Anunoby", "Mikal Bridges", "Jalen Brunson", "Jordan Clarkson", "Pacome Dadiet", "Mohamed Diawara", "Tosan Evbuomwan", "Josh Hart", "Miles McBride", "Mitchell Robinson", "Karl-Anthony Towns", "Tyler Kolek", "Landry Shamet", "Ariel Hukporti", "Guerschon Yabusele", "Jeremy Sochan", "Kevin McCullar Jr.", "Dillon Jones", "Trey Jemison"],
     }
     for roster in champions.values():
         patch(roster, "champs")
@@ -240,6 +283,22 @@ def main() -> None:
     assert (barbosa["mvp"], barbosa["fmvp"], barbosa["champs"], barbosa["nba1"]) == (0, 0, 1, 0)
     assert 10.5 < float(barbosa["ppg"]) < 10.7
     assert (lebron["mvp"], lebron["fmvp"], lebron["champs"], lebron["nba1"]) == (4, 4, 4, 13)
+    expected_recent_champions = {
+        "christianbraun": 1,
+        "jadenspringer": 1,
+        "ajaymitchell": 1,
+        "dillonjones": 2,
+        "nikolatopic": 1,
+        "treyjemison": 1,
+    }
+    for name_key, expected in expected_recent_champions.items():
+        assert int(lookup[name_key]["champs"]) == expected
+    assert (lookup["mouhamadougueye"]["first_seas"], lookup["mouhamadougueye"]["last_seas"]) == (2024, 2026)
+    assert (lookup["tristennewton"]["first_seas"], lookup["tristennewton"]["last_seas"]) == (2025, 2026)
+    for player in output:
+        assert int(player["first_seas"]) <= int(player["last_seas"])
+        assert int(player["fmvp"]) <= int(player["champs"])
+        assert int(player["champs"]) <= int(player["seasons"])
     print(json.dumps({"players": len(output), "barbosa": barbosa, "lebron": lebron}, ensure_ascii=False, indent=2))
 
 
