@@ -77,7 +77,7 @@ table{width:100%;border-collapse:collapse;min-width:940px}th,td{padding:10px 11p
     </div>
   </header>
 
-  <div class="notice" data-i18n="notice">這是一套以公開歷史資料建立、可調權重的透明歷史地位指數；不是 NBA 官方排名，也不是經科學證明的定論。</div>
+  <div class="notice" data-i18n="notice">模型 v2 使用逐季同年代百分位、最佳三季與連續投票份額，降低年代差異、獎項二元化及重複計分；仍是透明估計，不是 NBA 官方排名。</div>
 
   <nav class="tabs" aria-label="Sections">
     <button class="tab active" data-tab="ranking" data-i18n="tabRanking">Top 100 / 全部球員</button>
@@ -115,16 +115,16 @@ table{width:100%;border-collapse:collapse;min-width:940px}th,td{padding:10px 11p
   </section>
 
   <section id="method" class="panel">
-    <div class="card rulesHero"><div><h2 data-i18n="methodTitle">100 分制量化標準</h2><p data-i18n="methodIntro">每名球員先得到六個 0–100 的分項分數，再依權重加權成總分。若球員過半生涯處於某獎項尚未存在的年代，該不可觀測分項會記為 N/A 並重新正規化。</p></div><div class="badge" data-i18n="defaultWeights">預設權重 25 / 25 / 20 / 10 / 10 / 10</div></div>
+    <div class="card rulesHero"><div><h2 data-i18n="methodTitle">模型 v2：100 分制量化標準</h2><p data-i18n="methodIntro">每季先與同聯盟、同賽季球員比較，再把逐季證據組合成六個分項；缺少進階數據時只在該分項內重新配置可觀測指標。</p></div><div class="badge" data-i18n="defaultWeights">預設權重 30 / 20 / 20 / 10 / 10 / 10</div></div>
     <div class="ruleGrid">
-      <div class="ruleCard"><h3 data-i18n="peakTitle">1. 巔峰統治力 Peak</h3><ul><li data-i18n="peak1">MVP：4.5 點 / 次</li><li data-i18n="peak2">All-NBA 1st：0.9 點 / 次</li><li data-i18n="peak3">All-NBA 2nd：0.25 點 / 次</li><li data-i18n="peak4">原始分封頂 25，再換算為 0–100 分項。</li></ul><code class="formula">Peak = min(25, 4.5×MVP + 0.9×NBA1 + 0.25×NBA2)</code></div>
-      <div class="ruleCard"><h3 data-i18n="playoffTitle">2. 季後賽 / 冠軍核心 Playoff Legacy</h3><ul><li data-i18n="play1">FMVP：4.5 點 / 次</li><li data-i18n="play2">每枚冠軍戒指：0.45 點基礎值</li><li data-i18n="play3">非 FMVP 冠軍會依 MVP / All-NBA 履歷估算「核心冠軍代理值」，避免把 Robert Horry 與第一核心冠軍視為等價。</li><li data-i18n="play4">1969 年 FMVP 設立前的代理修正，會依球員處於該年代的生涯比例縮放。</li></ul><code class="formula">CoreFactor = min(1.5, .25 + .35×MVP + .12×NBA1 + .05×NBA2)\nEarlyEraProxy = min(8, max(0,Titles−FMVP) × (.4×MVP + .15×NBA1) × PreFMVPShare)\nPlayoff = min(25, 4.5×FMVP + .45×Titles + CoreFactor×max(0,Titles−FMVP) + EarlyEraProxy)</code></div>
-      <div class="ruleCard"><h3 data-i18n="sustainTitle">3. 長期頂尖 Sustained Elite</h3><ul><li data-i18n="sustain1">All-NBA 1st：1.0 / 次</li><li data-i18n="sustain2">All-NBA 2nd：0.65 / 次</li><li data-i18n="sustain3">All-NBA 3rd：0.40 / 次</li><li data-i18n="sustain4">All-Star：0.25 / 次</li></ul><code class="formula">Sustained = min(20, NBA1 + .65×NBA2 + .4×NBA3 + .25×AllStar)</code></div>
-      <div class="ruleCard"><h3 data-i18n="defTitle">4. 防守履歷 Defense</h3><ul><li data-i18n="def1">DPOY：2.5 / 次</li><li data-i18n="def2">All-Defense 1st：0.65 / 次</li><li data-i18n="def3">All-Defense 2nd：0.35 / 次</li><li data-i18n="def4">若過半生涯賽季沒有 All-Defense 參評機會，防守分項記為 N/A，不當成 0 分。</li></ul><code class="formula">Defense = min(10, 2.5×DPOY + .65×DEF1 + .35×DEF2)</code></div>
-      <div class="ruleCard"><h3 data-i18n="lonTitle">5. 生涯長度 Longevity</h3><ul><li data-i18n="lon1">以 NBA / BAA / ABA 賽季數計算。</li><li data-i18n="lon2">16 季以上達到此分項滿分。</li></ul><code class="formula">Longevity = min(10, 2 + .5×Seasons)</code></div>
-      <div class="ruleCard"><h3 data-i18n="prodTitle">6. 生涯產量 Production</h3><ul><li data-i18n="prod1">生涯 PPG 最多 5 點</li><li data-i18n="prod2">RPG 最多 2 點、APG 最多 2 點</li><li data-i18n="prod3">SPG + BPG 僅以有正式記錄的場次計算；若少於半數生涯賽季可觀測，該 1 點會排除並重新正規化。</li><li data-i18n="prod4">產量只佔 10% 預設權重，降低年代與節奏偏差。</li></ul><code class="formula">Production = min(5,PPG/6)+min(2,RPG/6)+min(2,APG/5)+min(1,(SPG+BPG)/3)</code></div>
+      <div class="ruleCard"><h3 data-i18n="peakTitle">1. 最佳三季巔峰 Peak</h3><ul><li data-i18n="peak1">每季 PER、WS/48、BPM 轉為同聯盟同季百分位，衡量效率與影響率。</li><li data-i18n="peak2">WS、VORP 衡量總價值，並加入出賽率與同年代攻傳籃產量。</li><li data-i18n="peak3">短樣本會依上場時間向聯盟中位數收縮，避免少量出賽產生虛高。</li><li data-i18n="peak4">取最佳三季平均；1952 年前缺進階數據時使用同年代產量百分位替代並標示覆蓋率。</li></ul><code class="formula">Season = 50% Rate + 25% Volume + 15% Box + 10% Availability\nPeak = clamp(2 × (mean(Best 3 Season percentiles) − 50), 0, 100)</code></div>
+      <div class="ruleCard"><h3 data-i18n="playoffTitle">2. 冠軍影響 Championship Impact</h3><ul><li data-i18n="play1">每座 FMVP 計 1 個冠軍核心點。</li><li data-i18n="play2">非 FMVP 冠軍依巔峰分與長期頂尖分估計核心程度。</li><li data-i18n="play3">角色球員戒指仍有價值，但不會等同第一核心冠軍。</li><li data-i18n="play4">因缺少完整逐季季後賽進階數據，本項只稱「冠軍影響」，不冒充完整季後賽能力。</li></ul><code class="formula">Role = 60% Peak + 40% Sustained\nCredits = FMVP + (Titles−FMVP) × (0.15 + 0.50×Role)\nChampionship = min(100, 25×Credits)</code></div>
+      <div class="ruleCard"><h3 data-i18n="sustainTitle">3. 長期頂尖 Sustained Elite</h3><ul><li data-i18n="sustain1">MVP 使用投票份額而非只有得主得到分數。</li><li data-i18n="sustain2">同一季只取 MVP 投票、All-NBA 或 All-Star 的最高一項，避免重複計分。</li><li data-i18n="sustain3">All-NBA 一／二／三陣季分為 0.85／0.65／0.45。</li><li data-i18n="sustain4">All-Star 單獨入選季為 0.25；累積 10 個頂尖季點達滿分。</li></ul><code class="formula">YearCredit = max(√MVP-share, .85/.65/.45 All-NBA, .25 All-Star)\nSustained = min(100, 10×ΣYearCredit)</code></div>
+      <div class="ruleCard"><h3 data-i18n="defTitle">4. 防守履歷 Defense</h3><ul><li data-i18n="def1">DPOY 使用連續投票份額，得主為 1.0。</li><li data-i18n="def2">最佳防守一／二陣季分為 0.75／0.50，同季只取最高證據。</li><li data-i18n="def3">獎項制度存在於過半生涯者以投票與陣容為主，避免防守數據重複累積。</li><li data-i18n="def4">早期年代以同季 DWS／DBPM 百分位做代理，並公開獎項覆蓋率。</li></ul><code class="formula">Defense = min(100, 100×ΣBest yearly defense evidence / 6)</code></div>
+      <div class="ruleCard"><h3 data-i18n="lonTitle">5. 可用生涯長度 Durability</h3><ul><li data-i18n="lon1">每季以實際出賽場次除以該季賽程，換算完整賽季當量。</li><li data-i18n="lon2">18 個完整賽季當量達滿分，縮水賽季會自動按比例校正。</li></ul><code class="formula">Full-season equivalents = Σ min(1, Games / League schedule)\nDurability = min(100, 100×Equivalents/18)</code></div>
+      <div class="ruleCard"><h3 data-i18n="prodTitle">6. 年代校正生涯產量 Production</h3><ul><li data-i18n="prod1">每季得分＋1.2×籃板＋1.5×助攻先轉為同季百分位。</li><li data-i18n="prod2">只累積高於聯盟中位數的部分，並乘以當季出賽率。</li><li data-i18n="prod3">防守產量不在此重複計分，另由防守分項處理。</li><li data-i18n="prod4">累積 12 個頂尖產量季點達滿分。</li></ul><code class="formula">YearCredit = max(0, (Era percentile−50)/50) × Availability\nProduction = min(100, 100×ΣYearCredit/12)</code></div>
     </div>
-    <div class="card flat" style="margin-top:14px"><h3 style="margin-top:0" data-i18n="eraTitle">年代修正與模型限制</h3><ul class="sourceList"><li data-i18n="era1">FMVP 自 1969 年開始；All-Defense 自 1968-69 開始；抄截與阻攻自 1973-74 才完整記錄。</li><li data-i18n="era2">模型不直接加入名人堂、人氣、球鞋文化或媒體聲量。</li><li data-i18n="era3">「核心冠軍代理值」仍使用生涯履歷，不是逐年角色判定；此排名是可調權重的透明指數，不是 NBA 官方或經科學證明的定論。</li><li data-i18n="era4">2025-26 PER / WS / WS/48 / BPM / VORP 僅作資訊展示，不納入總分；差距小於 1 分時不應解讀為明確高下。</li></ul></div>
+    <div class="card flat" style="margin-top:14px"><h3 style="margin-top:0" data-i18n="eraTitle">年代修正、檢測與限制</h3><ul class="sourceList"><li data-i18n="era1">所有逐季數值在同聯盟、同賽季內轉為百分位，降低節奏、賽程與聯盟環境差異。</li><li data-i18n="era2">模型不直接加入名人堂、人氣、球鞋文化或媒體聲量，也不為符合主觀排名手動加分。</li><li data-i18n="era3">1952 年前進階數據、1969 年前防守獎項及完整歷史季後賽影響資料不足，會使用明示代理值而非假裝精確。</li><li data-i18n="era4">分差小於 1 分視為同一層級；結果是可重算的證據模型，不是 NBA 官方或經科學證明的定論。</li></ul></div>
   </section>
 
   <section id="weights" class="panel">
@@ -152,69 +152,93 @@ const I18N={
  title:'NBA 历史地位量化排名器',subtitle:'涵盖历史球员、Top 100、两两对比、可调权重与完整量化标准。',notice:'模型以公开历史数据为底层，并补入 2024-25 与 2025-26 的主要奖项。排名是量化模型结果，不是 NBA 官方排名。',tabRanking:'Top 100 / 全部球员',tabCompare:'两两对比',tabMethod:'量化标准',tabWeights:'权重设置',searchLabel:'搜索球员',searchPlaceholder:'例如 Michael Jordan、Kobe Bryant、Karl Malone…',scopeLabel:'显示范围',scopeTop100:'Top 100',scopeAll:'全部球员',statusLabel:'数据状态',player:'球员',score:'总分',titles:'冠军',seasons:'赛季',prev:'上一页',next:'下一页',playerA:'球员 A',playerB:'球员 B',categoryCompare:'分项对比',rawResume:'履历与数据',metric:'项目',methodTitle:'100 分制量化标准',methodIntro:'每名球员先得到六个 0–100 的分项分数，再按权重加权为总分。早期年代缺少某些正式奖项时，模型会跳过不可观测项目并重新归一化，而不是直接记为 0 分。',defaultWeights:'默认权重 25 / 25 / 20 / 10 / 10 / 10',peakTitle:'1. 巅峰统治力 Peak',peak1:'MVP：4.5 点 / 次',peak2:'All-NBA 1st：0.9 点 / 次',peak3:'All-NBA 2nd：0.25 点 / 次',peak4:'原始分封顶 25，再换算为 0–100 分项。',playoffTitle:'2. 季后赛 / 冠军核心 Playoff Legacy',play1:'FMVP：4.5 点 / 次',play2:'每枚冠军戒指：0.45 点基础值',play3:'非 FMVP 冠军会按 MVP / All-NBA 履历估算“核心冠军代理值”，避免把角色球员戒指与第一核心冠军视为等价。',play4:'1969 年 FMVP 设立前，使用 MVP / All-NBA 1st 做有限代理修正。',sustainTitle:'3. 长期顶尖 Sustained Elite',sustain1:'All-NBA 1st：1.0 / 次',sustain2:'All-NBA 2nd：0.65 / 次',sustain3:'All-NBA 3rd：0.40 / 次',sustain4:'All-Star：0.25 / 次',defTitle:'4. 防守履历 Defense',def1:'DPOY：2.5 / 次',def2:'All-Defense 1st：0.65 / 次',def3:'All-Defense 2nd：0.35 / 次',def4:'1969 年以前没有 All-Defense，该年代不直接记 0 分。',lonTitle:'5. 生涯长度 Longevity',lon1:'按 NBA / BAA / ABA 赛季数计算。',lon2:'16 季以上达到此分项满分。',prodTitle:'6. 生涯产量 Production',prod1:'生涯 PPG 最多 5 点',prod2:'RPG 最多 2 点、APG 最多 2 点',prod3:'SPG + BPG 最多 1 点；1974 年以前无完整抢断 / 盖帽数据时重新归一化。',prod4:'产量只占 10% 默认权重，降低年代与节奏偏差。',eraTitle:'年代修正与模型限制',era1:'FMVP 自 1969 年开始；All-Defense 自 1968-69 开始；抢断与盖帽自 1973-74 才完整记录。',era2:'模型不直接加入名人堂、人氣、球鞋文化或媒体声量。',era3:'“核心冠军代理值”是透明的数学近似，不等于人工逐冠判定角色。',era4:'2025-26 PER / WS / WS/48 / BPM / VORP 仅作信息展示，不纳入总分，避免历史年代缺数据造成不公平。',weightTitle:'自定义历史地位权重',weightIntro:'调整后 Top 100 与两两对比会即时重算。权重总和不必刚好 100，模型会自动归一化。',weightTotal:'当前总权重',presetDefault:'默认平衡',presetPeak:'巅峰优先',presetPlayoff:'季后赛优先',presetLongevity:'长期累积优先',loading:'加载中…',loaded:'成功加载',playersWord:'名球员',top100Ready:'Top 100 已计算',loadFail:'数据加载失败',noResults:'没有符合的球员',page:'第',of:'页 / 共',showing:'显示',advanced:'2025-26 高阶数据',noAdvanced:'无 2025-26 高阶数据',seasonWord:'季',champWord:'冠',peak:'巅峰',playoff:'季后赛 / 冠军',sustained:'长期顶尖',defense:'防守',longevity:'生涯长度',production:'生涯产量',foot:'数据来源：公开 Basketball-Reference 衍生数据集，另依据 NBA.com / Basketball-Reference 公开历史奖项与 2025-26 数据校正。'
 }};
 Object.assign(I18N.en,{
- notice:'This is a transparent, adjustable legacy index built from public historical data. It is not an official NBA ranking or a scientifically proven verdict.',
- methodIntro:'Each player receives six category scores from 0–100, then a weighted total. If more than half of a career occurred before an award existed, that unobservable category is marked N/A and the remaining weights are renormalized.',
- play4:'The pre-1969 Finals MVP proxy is scaled by the share of a player\'s career that occurred before the award existed.',
- def4:'If more than half of a player\'s seasons had no All-Defense eligibility, Defense is marked N/A instead of zero.',
- prod3:'SPG + BPG uses only games with official tracking; if fewer than half of career seasons are observable, that point is excluded and the category is renormalized.',
- era3:'The core-title proxy still uses career résumé rather than a title-by-title role label. This is a transparent adjustable index, not an official NBA or scientifically proven verdict.',
- era4:'2025-26 PER / WS / WS/48 / BPM / VORP are context only and are not scored. Differences below one point should not be read as a definitive separation.',
+ title:'NBA All-Time Legacy Ranker · Model v2',
+ subtitle:'Era-adjusted season evidence, Top 100, searchable comparisons, adjustable weights and fully disclosed formulas.',
+ notice:'Model v2 uses within-season percentiles, a best-three-season peak and continuous vote shares to reduce era bias, binary-award bias and duplicate counting. It remains a transparent estimate, not an official NBA ranking.',
+ methodTitle:'Model v2: 100-point scoring standard',
+ methodIntro:'Each season is first compared with players in the same league and season, then combined into six categories. Missing advanced metrics are reweighted only within the affected component.',
+ defaultWeights:'Default weights 30 / 20 / 20 / 10 / 10 / 10',
+ peakTitle:'1. Best-three-season peak',peak1:'PER, WS/48 and BPM become same-league, same-season percentiles for impact rate.',peak2:'WS and VORP measure value volume; availability and era-relative box production are also included.',peak3:'Small samples shrink toward the league median according to minutes played.',peak4:'The best three available seasons are averaged; pre-1952 seasons use an era-relative box fallback and expose coverage.',
+ playoffTitle:'2. Championship impact',play1:'Each Finals MVP is worth one championship-core credit.',play2:'Non-FMVP titles estimate role from the player’s peak and sustained-elite scores.',play3:'Role-player rings retain value without equaling a first-option championship.',play4:'Because complete historical playoff impact data is unavailable, this measures championship impact—not all playoff ability.',
+ sustainTitle:'3. Sustained elite play',sustain1:'MVP uses continuous vote share rather than winner-only scoring.',sustain2:'Each season keeps only the strongest of MVP share, All-NBA or All-Star evidence to prevent duplication.',sustain3:'All-NBA First / Second / Third seasons receive 0.85 / 0.65 / 0.45.',sustain4:'An All-Star-only season receives 0.25; ten elite-season credits reach 100.',
+ defTitle:'4. Defensive résumé',def1:'DPOY uses continuous vote share; the winner receives 1.0.',def2:'All-Defense First / Second seasons receive 0.75 / 0.50, with one best item per season.',def3:'For careers mostly inside the award era, voting and teams are primary so defensive metrics do not accumulate twice.',def4:'Earlier eras use same-season DWS / DBPM percentiles as an explicit proxy and expose award coverage.',
+ lonTitle:'5. Available-career durability',lon1:'Games played are divided by that season’s league schedule to create full-season equivalents.',lon2:'Eighteen full-season equivalents reach 100; shortened schedules are automatically adjusted.',
+ prodTitle:'6. Era-adjusted career production',prod1:'Points + 1.2×rebounds + 1.5×assists becomes a same-season percentile.',prod2:'Only production above the league median accumulates, multiplied by availability.',prod3:'Defensive production is excluded here to avoid duplicating the defense category.',prod4:'Twelve elite-production season credits reach 100.',
+ eraTitle:'Era adjustments, tests & limits',era1:'Every season metric is converted to a same-league, same-season percentile to reduce pace, schedule and environment differences.',era2:'Hall of Fame status, popularity, shoe culture and media attention add no points; scores are not hand-tuned to match a preferred ranking.',era3:'Pre-1952 advanced data, pre-1969 defensive awards and complete historical playoff impact data are limited, so explicit proxies replace false precision.',era4:'Differences below one point are treated as the same tier. This is a reproducible evidence model, not an official or scientifically proven verdict.',
  compareSearchPlaceholder:'Type a player name to search…',
  noPlayerMatches:'No matching players',
  presetHint:'The blue button shows the active preset; manual adjustments update the state automatically.',
- weightDescPeak:'Values the highest level of play represented by MVP and All-NBA honors.',
- weightDescPlayoff:'Values Finals MVPs, championships and the estimated importance of each title role.',
- weightDescSustained:'Values long-term All-NBA and All-Star recognition.',
- weightDescDefense:'Values DPOY awards and All-Defensive Team honors.',
- weightDescLongevity:'Values the number of NBA / ABA / BAA seasons sustained.',
- weightDescProduction:'Values career scoring, rebounding, assists, steals and blocks.',
- foot:'Sources: public Basketball-Reference-derived datasets, corrected against NBA.com award and player championship records. Latest audit: 2026-08-26.'
+ weightDescPeak:'Best three seasons using era-relative impact, volume and availability—not award totals.',
+ weightDescPlayoff:'Finals MVPs, titles and a disclosed estimate of championship role.',
+ weightDescSustained:'One strongest MVP / All-NBA / All-Star credit per season, with no duplicate counting.',
+ weightDescDefense:'Continuous DPOY voting, All-Defense teams and an explicit early-era proxy.',
+ weightDescLongevity:'Full-season equivalents based on actual games and each season’s schedule.',
+ weightDescProduction:'Era-relative above-median scoring, rebounding and playmaking sustained over a career.',
+ peak:'Best-three peak',playoff:'Championship impact',longevity:'Durability',
+ peakSeasons:'Model v2 peak seasons',peakCoverage:'Peak advanced-data coverage',fullSeasonEquiv:'Full-season equivalents',eliteCredits:'Elite-season credits',championshipCredits:'Championship-core credits',defenseAwardCoverage:'Defensive-award coverage',weightWord:'weight',
+ foot:'Sources: public Basketball-Reference-derived season data, corrected against NBA.com award and championship records. Model v2 audit: 2026-08-27.'
 });
 Object.assign(I18N['zh-Hant'],{
- notice:'這是一套以公開歷史資料建立、可調權重的透明歷史地位指數；不是 NBA 官方排名，也不是經科學證明的定論。',
- methodIntro:'每名球員先得到六個 0–100 的分項分數，再依權重加權成總分。若球員過半生涯處於某獎項尚未存在的年代，該不可觀測分項會記為 N/A 並重新正規化。',
- play4:'1969 年 FMVP 設立前的代理修正，會依球員處於該年代的生涯比例縮放。',
- def4:'若過半生涯賽季沒有 All-Defense 參評機會，防守分項記為 N/A，不當成 0 分。',
- prod3:'SPG + BPG 僅以有正式記錄的場次計算；若少於半數生涯賽季可觀測，該 1 點會排除並重新正規化。',
- era3:'「核心冠軍代理值」仍使用生涯履歷，不是逐年角色判定；此排名是可調權重的透明指數，不是 NBA 官方或經科學證明的定論。',
- era4:'2025-26 PER / WS / WS/48 / BPM / VORP 僅作資訊展示，不納入總分；差距小於 1 分時不應解讀為明確高下。',
+ title:'NBA 歷史地位量化排名器 · 模型 v2',
+ subtitle:'逐季年代校正、Top 100、可搜尋兩兩比較、可調權重與完整公開公式。',
+ notice:'模型 v2 使用逐季同年代百分位、最佳三季與連續投票份額，降低年代差異、獎項二元化及重複計分；仍是透明估計，不是 NBA 官方排名。',
+ methodTitle:'模型 v2：100 分制量化標準',
+ methodIntro:'每季先與同聯盟、同賽季球員比較，再把逐季證據組合成六個分項；缺少進階數據時只在該分項內重新配置可觀測指標。',
+ defaultWeights:'預設權重 30 / 20 / 20 / 10 / 10 / 10',
+ peakTitle:'1. 最佳三季巔峰 Peak',peak1:'每季 PER、WS/48、BPM 轉為同聯盟同季百分位，衡量效率與影響率。',peak2:'WS、VORP 衡量總價值，並加入出賽率與同年代攻傳籃產量。',peak3:'短樣本會依上場時間向聯盟中位數收縮，避免少量出賽產生虛高。',peak4:'取最佳三季平均；1952 年前缺進階數據時使用同年代產量百分位替代並標示覆蓋率。',
+ playoffTitle:'2. 冠軍影響 Championship Impact',play1:'每座 FMVP 計 1 個冠軍核心點。',play2:'非 FMVP 冠軍依巔峰分與長期頂尖分估計核心程度。',play3:'角色球員戒指仍有價值，但不會等同第一核心冠軍。',play4:'因缺少完整逐季季後賽進階數據，本項只稱「冠軍影響」，不冒充完整季後賽能力。',
+ sustainTitle:'3. 長期頂尖 Sustained Elite',sustain1:'MVP 使用投票份額而非只有得主得到分數。',sustain2:'同一季只取 MVP 投票、All-NBA 或 All-Star 的最高一項，避免重複計分。',sustain3:'All-NBA 一／二／三陣季分為 0.85／0.65／0.45。',sustain4:'All-Star 單獨入選季為 0.25；累積 10 個頂尖季點達滿分。',
+ defTitle:'4. 防守履歷 Defense',def1:'DPOY 使用連續投票份額，得主為 1.0。',def2:'最佳防守一／二陣季分為 0.75／0.50，同季只取最高證據。',def3:'獎項制度存在於過半生涯者以投票與陣容為主，避免防守數據重複累積。',def4:'早期年代以同季 DWS／DBPM 百分位做代理，並公開獎項覆蓋率。',
+ lonTitle:'5. 可用生涯長度 Durability',lon1:'每季以實際出賽場次除以該季賽程，換算完整賽季當量。',lon2:'18 個完整賽季當量達滿分，縮水賽季會自動按比例校正。',
+ prodTitle:'6. 年代校正生涯產量 Production',prod1:'每季得分＋1.2×籃板＋1.5×助攻先轉為同季百分位。',prod2:'只累積高於聯盟中位數的部分，並乘以當季出賽率。',prod3:'防守產量不在此重複計分，另由防守分項處理。',prod4:'累積 12 個頂尖產量季點達滿分。',
+ eraTitle:'年代修正、檢測與限制',era1:'所有逐季數值在同聯盟、同賽季內轉為百分位，降低節奏、賽程與聯盟環境差異。',era2:'模型不直接加入名人堂、人氣、球鞋文化或媒體聲量，也不為符合主觀排名手動加分。',era3:'1952 年前進階數據、1969 年前防守獎項及完整歷史季後賽影響資料不足，會使用明示代理值而非假裝精確。',era4:'分差小於 1 分視為同一層級；結果是可重算的證據模型，不是 NBA 官方或經科學證明的定論。',
  compareSearchPlaceholder:'輸入球員姓名搜尋…',
  noPlayerMatches:'沒有符合的球員',
  presetHint:'藍底表示目前套用的模式；手動調整後也會依實際數值自動更新。',
- weightDescPeak:'重視 MVP 與 All-NBA 所代表的最高峰表現。',
- weightDescPlayoff:'重視 FMVP、冠軍數與每次奪冠的核心程度。',
- weightDescSustained:'重視長期入選 All-NBA 與 All-Star 的履歷。',
- weightDescDefense:'重視 DPOY 與最佳防守陣容履歷。',
- weightDescLongevity:'重視維持 NBA／ABA／BAA 生涯的賽季長度。',
- weightDescProduction:'重視生涯得分、籃板、助攻、抄截與阻攻產量。',
- foot:'資料來源：公開 Basketball-Reference 衍生資料集，另依 NBA.com 公開獎項與球員冠軍履歷校正。最新審計：2026-08-26。'
+ weightDescPeak:'以同年代影響、總價值與出賽率衡量最佳三季，不再用獎項總數代替巔峰。',
+ weightDescPlayoff:'重視 FMVP、冠軍數與公開估算的奪冠核心程度。',
+ weightDescSustained:'每季只取 MVP／All-NBA／All-Star 的最高證據，避免重複計分。',
+ weightDescDefense:'使用連續 DPOY 投票、最佳防守陣容與明示的早期年代代理。',
+ weightDescLongevity:'依實際出賽與各季賽程換算完整賽季當量。',
+ weightDescProduction:'累積經年代校正、超過同季中位數的得分、籃板與組織產量。',
+ peak:'最佳三季巔峰',playoff:'冠軍影響',longevity:'可用生涯',
+ peakSeasons:'模型 v2 巔峰賽季',peakCoverage:'巔峰進階數據覆蓋率',fullSeasonEquiv:'完整賽季當量',eliteCredits:'頂尖賽季點',championshipCredits:'冠軍核心點',defenseAwardCoverage:'防守獎項覆蓋率',weightWord:'權重',
+ foot:'資料來源：公開 Basketball-Reference 衍生逐季資料，另依 NBA.com 公開獎項與冠軍履歷校正。模型 v2 審計：2026-08-27。'
 });
 Object.assign(I18N['zh-Hans'],{
- notice:'这是一套以公开历史数据建立、可调权重的透明历史地位指数；不是 NBA 官方排名，也不是经科学证明的定论。',
- methodIntro:'每名球员先得到六个 0–100 的分项分数，再按权重加权为总分。若球员过半生涯处于某奖项尚未存在的年代，该不可观测分项会记为 N/A 并重新归一化。',
- play4:'1969 年 FMVP 设立前的代理修正，会按球员处于该年代的生涯比例缩放。',
- def4:'若过半生涯赛季没有 All-Defense 参评机会，防守分项记为 N/A，不当作 0 分。',
- prod3:'SPG + BPG 仅按有正式记录的场次计算；若少于半数生涯赛季可观测，该 1 点会排除并重新归一化。',
- era3:'“核心冠军代理值”仍使用生涯履历，不是逐年角色判定；此排名是可调权重的透明指数，不是 NBA 官方或经科学证明的定论。',
- era4:'2025-26 PER / WS / WS/48 / BPM / VORP 仅作信息展示，不纳入总分；差距小于 1 分时不应解读为明确高下。',
+ title:'NBA 历史地位量化排名器 · 模型 v2',
+ subtitle:'逐季年代校正、Top 100、可搜索两两对比、可调权重与完整公开公式。',
+ notice:'模型 v2 使用逐季同年代百分位、最佳三季与连续投票份额，降低年代差异、奖项二元化及重复计分；仍是透明估计，不是 NBA 官方排名。',
+ methodTitle:'模型 v2：100 分制量化标准',
+ methodIntro:'每季先与同联盟、同赛季球员比较，再把逐季证据组合成六个分项；缺少高阶数据时只在该分项内重新配置可观测指标。',
+ defaultWeights:'默认权重 30 / 20 / 20 / 10 / 10 / 10',
+ peakTitle:'1. 最佳三季巅峰 Peak',peak1:'每季 PER、WS/48、BPM 转为同联盟同季百分位，衡量效率与影响率。',peak2:'WS、VORP 衡量总价值，并加入出赛率与同年代攻传篮产量。',peak3:'短样本会按上场时间向联盟中位数收缩，避免少量出赛产生虚高。',peak4:'取最佳三季平均；1952 年前缺高阶数据时使用同年代产量百分位替代并标示覆盖率。',
+ playoffTitle:'2. 冠军影响 Championship Impact',play1:'每座 FMVP 计 1 个冠军核心点。',play2:'非 FMVP 冠军按巅峰分与长期顶尖分估计核心程度。',play3:'角色球员戒指仍有价值，但不会等同第一核心冠军。',play4:'因缺少完整逐季季后赛高阶数据，本项只称“冠军影响”，不冒充完整季后赛能力。',
+ sustainTitle:'3. 长期顶尖 Sustained Elite',sustain1:'MVP 使用投票份额而非只有得主得到分数。',sustain2:'同一季只取 MVP 投票、All-NBA 或 All-Star 的最高一项，避免重复计分。',sustain3:'All-NBA 一／二／三阵季分为 0.85／0.65／0.45。',sustain4:'All-Star 单独入选季为 0.25；累积 10 个顶尖季点达满分。',
+ defTitle:'4. 防守履历 Defense',def1:'DPOY 使用连续投票份额，得主为 1.0。',def2:'最佳防守一／二阵季分为 0.75／0.50，同季只取最高证据。',def3:'奖项制度存在于过半生涯者以投票与阵容为主，避免防守数据重复累积。',def4:'早期年代以同季 DWS／DBPM 百分位做代理，并公开奖项覆盖率。',
+ lonTitle:'5. 可用生涯长度 Durability',lon1:'每季以实际出赛场次除以该季赛程，换算完整赛季当量。',lon2:'18 个完整赛季当量达满分，缩水赛季会自动按比例校正。',
+ prodTitle:'6. 年代校正生涯产量 Production',prod1:'每季得分＋1.2×篮板＋1.5×助攻先转为同季百分位。',prod2:'只累积高于联盟中位数的部分，并乘以当季出赛率。',prod3:'防守产量不在此重复计分，另由防守分项处理。',prod4:'累积 12 个顶尖产量季点达满分。',
+ eraTitle:'年代修正、检测与限制',era1:'所有逐季数值在同联盟、同赛季内转为百分位，降低节奏、赛程与联盟环境差异。',era2:'模型不直接加入名人堂、人气、球鞋文化或媒体声量，也不为符合主观排名手动加分。',era3:'1952 年前高阶数据、1969 年前防守奖项及完整历史季后赛影响数据不足，会使用明示代理值而非假装精确。',era4:'分差小于 1 分视为同一层级；结果是可重算的证据模型，不是 NBA 官方或经科学证明的定论。',
  compareSearchPlaceholder:'输入球员姓名搜索…',
  noPlayerMatches:'没有符合的球员',
  presetHint:'蓝底表示当前套用的模式；手动调整后也会按实际数值自动更新。',
- weightDescPeak:'重视 MVP 与 All-NBA 所代表的最高峰表现。',
- weightDescPlayoff:'重视 FMVP、冠军数与每次夺冠的核心程度。',
- weightDescSustained:'重视长期入选 All-NBA 与 All-Star 的履历。',
- weightDescDefense:'重视 DPOY 与最佳防守阵容履历。',
- weightDescLongevity:'重视维持 NBA／ABA／BAA 生涯的赛季长度。',
- weightDescProduction:'重视生涯得分、篮板、助攻、抢断与盖帽产量。',
- foot:'数据来源：公开 Basketball-Reference 衍生数据集，另依据 NBA.com 公开奖项与球员冠军履历校正。最新审计：2026-08-26。'
+ weightDescPeak:'以同年代影响、总价值与出赛率衡量最佳三季，不再用奖项总数代替巅峰。',
+ weightDescPlayoff:'重视 FMVP、冠军数与公开估算的夺冠核心程度。',
+ weightDescSustained:'每季只取 MVP／All-NBA／All-Star 的最高证据，避免重复计分。',
+ weightDescDefense:'使用连续 DPOY 投票、最佳防守阵容与明示的早期年代代理。',
+ weightDescLongevity:'按实际出赛与各季赛程换算完整赛季当量。',
+ weightDescProduction:'累积经年代校正、超过同季中位数的得分、篮板与组织产量。',
+ peak:'最佳三季巅峰',playoff:'冠军影响',longevity:'可用生涯',
+ peakSeasons:'模型 v2 巅峰赛季',peakCoverage:'巅峰高阶数据覆盖率',fullSeasonEquiv:'完整赛季当量',eliteCredits:'顶尖赛季点',championshipCredits:'冠军核心点',defenseAwardCoverage:'防守奖项覆盖率',weightWord:'权重',
+ foot:'数据来源：公开 Basketball-Reference 衍生逐季数据，另依据 NBA.com 公开奖项与冠军履历校正。模型 v2 审计：2026-08-27。'
 });
 let lang='zh-Hant';
-const defaultWeights={peak:25,playoff:25,sustained:20,defense:10,longevity:10,production:10};
+const defaultWeights={peak:30,playoff:20,sustained:20,defense:10,longevity:10,production:10};
 const presetWeights={
  default:defaultWeights,
- peak:{peak:40,playoff:20,sustained:15,defense:8,longevity:7,production:10},
- playoff:{peak:20,playoff:40,sustained:15,defense:8,longevity:7,production:10},
- longevity:{peak:15,playoff:15,sustained:25,defense:10,longevity:25,production:10}
+ peak:{peak:45,playoff:15,sustained:15,defense:8,longevity:7,production:10},
+ playoff:{peak:25,playoff:35,sustained:15,defense:8,longevity:7,production:10},
+ longevity:{peak:20,playoff:15,sustained:25,defense:10,longevity:20,production:10}
 };
 let weights={...defaultWeights},players=[],sorted=[],top100=[],page=1,pageSize=50,advancedLoaded=false;
 const compareSelection={p1Search:null,p2Search:null};
@@ -223,20 +247,7 @@ function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/
 function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function subScores(p){
- const mvp=num(p.mvp),n1=num(p.nba1),n2=num(p.nba2),n3=num(p.nba3),fm=num(p.fmvp),ch=num(p.champs),dp=num(p.dpoy),d1=num(p.def1),d2=num(p.def2),as=num(p.allstar),yrs=num(p.seasons);
- const peakRaw=Math.min(25,mvp*4.5+n1*.9+n2*.25);
- const coreFactor=Math.min(1.5,.25+.35*mvp+.12*n1+.05*n2);
- const fmvpEligible=num(p.fmvp_eligible_seasons),preFmvpShare=yrs?Math.max(0,Math.min(1,1-fmvpEligible/yrs)):(num(p.first_seas)<1969?1:0);
- const earlyProxy=Math.min(8,Math.max(0,ch-fm)*(.4*mvp+.15*n1)*preFmvpShare);
- const playoffRaw=Math.min(25,fm*4.5+ch*.45+Math.max(0,ch-fm)*coreFactor+earlyProxy);
- const sustainedRaw=Math.min(20,n1+n2*.65+n3*.4+as*.25);
- const defenseRaw=Math.min(10,dp*2.5+d1*.65+d2*.35);
- const longevityRaw=Math.min(10,2+yrs*.5);
- let productionRaw=Math.min(5,num(p.ppg)/6)+Math.min(2,num(p.rpg)/6)+Math.min(2,num(p.apg)/5);
- const defenseEligible=num(p.defense_eligible_seasons),defenseAvailable=yrs?defenseEligible/yrs>=.5:num(p.last_seas)>=1969;
- const stocksEligible=num(p.stocks_eligible_seasons),stealsBlocksAvailable=yrs?stocksEligible/yrs>=.5:num(p.last_seas)>=1974;
- if(stealsBlocksAvailable) productionRaw+=Math.min(1,(num(p.spg)+num(p.bpg))/3); else productionRaw=productionRaw/9*10;
- return {peak:peakRaw/25*100,playoff:playoffRaw/25*100,sustained:sustainedRaw/20*100,defense:defenseAvailable?defenseRaw/10*100:null,longevity:longevityRaw/10*100,production:Math.min(10,productionRaw)/10*100,raw:{peakRaw,playoffRaw,sustainedRaw,defenseRaw,longevityRaw,productionRaw,coreFactor,preFmvpShare}};
+ return {peak:num(p.peak_v2),playoff:num(p.playoff_v2),sustained:num(p.sustained_v2),defense:num(p.defense_v2),longevity:num(p.longevity_v2),production:num(p.production_v2),raw:{peakYears:p.peak_years,peakCoverage:p.peak_coverage,championshipCredits:p.playoff_credits,eliteCredits:p.elite_credits,defenseCredits:p.defense_credits,fullSeasonEquiv:p.full_season_equiv,productionCredits:p.production_credits}};
 }
 function scorePlayer(p){const s=subScores(p);let total=0,den=0;Object.keys(weights).forEach(k=>{if(s[k]!==null&&weights[k]>0){total+=s[k]*weights[k];den+=weights[k]}});p.s={...s,total:den?total/den:0};return p.s.total}
 function rescore(){players.forEach(scorePlayer);sorted=players.slice().sort((a,b)=>b.s.total-a.s.total||b.mvp-a.mvp||b.fmvp-a.fmvp||a.name.localeCompare(b.name));top100=sorted.slice(0,100);page=1;renderRank();renderCompare();renderWeightRows()}
@@ -279,14 +290,14 @@ function setupPlayerSearch(inputId,listId,initialPlayer){
  if(initialPlayer)setComparePlayer(inputId,listId,initialPlayer,false);
 }
 function populateCompare(){const mj=players.find(p=>norm(p.name)==='michael jordan'),lbj=players.find(p=>norm(p.name)==='lebron james');setupPlayerSearch('p1Search','p1Suggestions',mj||players[0]);setupPlayerSearch('p2Search','p2Suggestions',lbj||players[1]);renderCompare()}
-function playerCard(p,other){const win=p.s.total>other.s.total;const adv=[['PER',p.per],['WS',p.ws],['WS/48',p.ws48],['BPM',p.bpm],['VORP',p.vorp]].filter(x=>x[1]!==null&&x[1]!==undefined);return `<div class="compareHeader"><div><div class="name">${esc(p.name)}</div><div class="meta">${p.first_seas||'?'}–${p.last_seas||'?'} · ${p.seasons} ${esc(t('seasonWord'))}</div></div></div><div class="score ${win?'winner':''}">${p.s.total.toFixed(1)} <small>/ 100</small></div><div class="pills"><span class="pill"><strong>${p.mvp}</strong> MVP</span><span class="pill"><strong>${p.fmvp}</strong> FMVP</span><span class="pill"><strong>${p.champs}</strong> ${esc(t('champWord'))}</span><span class="pill"><strong>${p.nba1}</strong> NBA 1st</span><span class="pill"><strong>${p.allstar}</strong> All-Star</span></div>${adv.length?`<div class="advGrid">${adv.map(([k,v])=>`<div class="adv"><b>${Number(v).toFixed(k==='WS/48'?3:1)}</b><span>${k}</span></div>`).join('')}</div><div class="quality">${esc(t('advanced'))}</div>`:`<div class="quality">${esc(t('noAdvanced'))}</div>`}`}
+function playerCard(p,other){const win=p.s.total>other.s.total;const adv=[['PER',p.per],['WS',p.ws],['WS/48',p.ws48],['BPM',p.bpm],['VORP',p.vorp]].filter(x=>x[1]!==null&&x[1]!==undefined),peakYears=Array.isArray(p.peak_years)?p.peak_years.join(', '):'—',coverage=Math.round(num(p.peak_coverage)*100);return `<div class="compareHeader"><div><div class="name">${esc(p.name)}</div><div class="meta">${p.first_seas||'?'}–${p.last_seas||'?'} · ${p.seasons} ${esc(t('seasonWord'))}</div></div></div><div class="score ${win?'winner':''}">${p.s.total.toFixed(1)} <small>/ 100</small></div><div class="pills"><span class="pill"><strong>${p.mvp}</strong> MVP</span><span class="pill"><strong>${p.fmvp}</strong> FMVP</span><span class="pill"><strong>${p.champs}</strong> ${esc(t('champWord'))}</span><span class="pill"><strong>${p.nba1}</strong> NBA 1st</span><span class="pill"><strong>${p.allstar}</strong> All-Star</span></div><div class="quality">${esc(t('peakSeasons'))}: ${esc(peakYears)} · ${esc(t('peakCoverage'))}: ${coverage}%</div>${adv.length?`<div class="advGrid">${adv.map(([k,v])=>`<div class="adv"><b>${Number(v).toFixed(k==='WS/48'?3:1)}</b><span>${k}</span></div>`).join('')}</div><div class="quality">${esc(t('advanced'))}</div>`:`<div class="quality">${esc(t('noAdvanced'))}</div>`}`}
 function renderCompare(){if(!players.length)return;const a=players.find(p=>String(p.id)===compareSelection.p1Search),b=players.find(p=>String(p.id)===compareSelection.p2Search);if(!a||!b)return;document.getElementById('card1').innerHTML=playerCard(a,b);document.getElementById('card2').innerHTML=playerCard(b,a);document.getElementById('h1').textContent=a.name;document.getElementById('h2').textContent=b.name;
  const cats=[['peak',t('peak')],['playoff',t('playoff')],['sustained',t('sustained')],['defense',t('defense')],['longevity',t('longevity')],['production',t('production')]];
- document.getElementById('breakdown').innerHTML=cats.map(([k,label])=>{const av=a.s[k],bv=b.s[k];return `<div class="metricGroup"><div class="metricTitle"><b>${esc(label)}</b><span>${weights[k]}× weight</span></div><div class="metricRow"><div>${esc(a.name)}</div><div class="bar"><div class="fillA" style="width:${av===null?0:Math.max(0,Math.min(100,av))}%"></div></div><div>${av===null?'N/A':av.toFixed(1)}</div></div><div class="metricRow"><div>${esc(b.name)}</div><div class="bar"><div class="fillB" style="width:${bv===null?0:Math.max(0,Math.min(100,bv))}%"></div></div><div>${bv===null?'N/A':bv.toFixed(1)}</div></div></div>`}).join('');
- const rows=[['MVP','mvp'],['FMVP','fmvp'],[t('titles'),'champs'],['All-NBA 1st','nba1'],['All-NBA 2nd','nba2'],['All-NBA 3rd','nba3'],['DPOY','dpoy'],['All-Defense 1st','def1'],['All-Defense 2nd','def2'],['All-Star','allstar'],[t('seasons'),'seasons'],['Career PPG','ppg'],['Career RPG','rpg'],['Career APG','apg'],['2025-26 PER','per'],['2025-26 WS','ws'],['2025-26 WS/48','ws48'],['2025-26 BPM','bpm'],['2025-26 VORP','vorp']];
+ document.getElementById('breakdown').innerHTML=cats.map(([k,label])=>{const av=a.s[k],bv=b.s[k];return `<div class="metricGroup"><div class="metricTitle"><b>${esc(label)}</b><span>${weights[k]}× ${esc(t('weightWord'))}</span></div><div class="metricRow"><div>${esc(a.name)}</div><div class="bar"><div class="fillA" style="width:${av===null?0:Math.max(0,Math.min(100,av))}%"></div></div><div>${av===null?'N/A':av.toFixed(1)}</div></div><div class="metricRow"><div>${esc(b.name)}</div><div class="bar"><div class="fillB" style="width:${bv===null?0:Math.max(0,Math.min(100,bv))}%"></div></div><div>${bv===null?'N/A':bv.toFixed(1)}</div></div></div>`}).join('');
+ const rows=[[t('peakSeasons'),'peak_years'],[t('peakCoverage'),'peak_coverage'],[t('championshipCredits'),'playoff_credits'],[t('eliteCredits'),'elite_credits'],[t('defenseAwardCoverage'),'defense_award_coverage'],[t('fullSeasonEquiv'),'full_season_equiv'],['MVP','mvp'],['FMVP','fmvp'],[t('titles'),'champs'],['All-NBA 1st','nba1'],['All-NBA 2nd','nba2'],['All-NBA 3rd','nba3'],['DPOY','dpoy'],['All-Defense 1st','def1'],['All-Defense 2nd','def2'],['All-Star','allstar'],[t('seasons'),'seasons'],['Career PPG','ppg'],['Career RPG','rpg'],['Career APG','apg'],['2025-26 PER','per'],['2025-26 WS','ws'],['2025-26 WS/48','ws48'],['2025-26 BPM','bpm'],['2025-26 VORP','vorp']];
  document.getElementById('rawBody').innerHTML=rows.map(([label,k])=>`<tr><td>${esc(label)}</td><td>${formatVal(a[k],k)}</td><td>${formatVal(b[k],k)}</td></tr>`).join('')
 }
-function formatVal(v,k){if(v===null||v===undefined)return '—';if(['ppg','rpg','apg','per','ws','bpm','vorp'].includes(k))return Number(v).toFixed(1);if(k==='ws48')return Number(v).toFixed(3);return esc(v)}
+function formatVal(v,k){if(v===null||v===undefined)return '—';if(Array.isArray(v))return esc(v.join(', '));if(['peak_coverage','defense_award_coverage'].includes(k))return `${Math.round(num(v)*100)}%`;if(['playoff_credits','elite_credits','full_season_equiv'].includes(k))return Number(v).toFixed(2);if(['ppg','rpg','apg','per','ws','bpm','vorp'].includes(k))return Number(v).toFixed(1);if(k==='ws48')return Number(v).toFixed(3);return esc(v)}
 function activePreset(){return Object.entries(presetWeights).find(([,preset])=>Object.keys(weights).every(k=>weights[k]===preset[k]))?.[0]||null}
 function renderPresetState(){const active=activePreset();document.querySelectorAll('[data-preset]').forEach(button=>{const selected=button.dataset.preset===active;button.classList.toggle('primary',selected);button.setAttribute('aria-pressed',String(selected))})}
 function renderWeightRows(){const labels={peak:t('peak'),playoff:t('playoff'),sustained:t('sustained'),defense:t('defense'),longevity:t('longevity'),production:t('production')};const descriptions={peak:t('weightDescPeak'),playoff:t('weightDescPlayoff'),sustained:t('weightDescSustained'),defense:t('weightDescDefense'),longevity:t('weightDescLongevity'),production:t('weightDescProduction')};document.getElementById('weightRows').innerHTML=Object.keys(weights).map(k=>`<div class="weightRow"><div class="weightRowTop"><b>${esc(labels[k])}</b><span>${weights[k]}</span></div><div class="weightDesc">${esc(descriptions[k])}</div><input type="range" min="0" max="50" step="1" value="${weights[k]}" data-weight="${k}" aria-label="${esc(labels[k])}"></div>`).join('');document.getElementById('weightTotal').textContent=Object.values(weights).reduce((a,b)=>a+b,0);renderPresetState();document.querySelectorAll('[data-weight]').forEach(el=>el.addEventListener('input',e=>{weights[e.target.dataset.weight]=num(e.target.value);rescore()}))}
@@ -296,7 +307,7 @@ function applyLanguage(){document.documentElement.lang=lang;document.querySelect
 document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.getElementById(btn.dataset.tab).classList.add('active')}));
 document.querySelectorAll('.langbtn').forEach(btn=>btn.addEventListener('click',()=>{lang=btn.dataset.lang;applyLanguage()}));
 document.getElementById('search').addEventListener('input',()=>{page=1;renderRank()});document.getElementById('scope').addEventListener('change',()=>{page=1;renderRank()});document.getElementById('prevPage').addEventListener('click',()=>{if(page>1){page--;renderRank();window.scrollTo({top:0,behavior:'smooth'})}});document.getElementById('nextPage').addEventListener('click',()=>{page++;renderRank();window.scrollTo({top:0,behavior:'smooth'})});document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>setPreset(b.dataset.preset)));
-renderWeightRows();load();
+applyLanguage();load();
 })();
 </script>
 </body>
