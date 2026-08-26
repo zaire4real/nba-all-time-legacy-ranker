@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>NBA All-Time Legacy Ranker</title>
+<style>
+:root{
+  --bg:#090c12;--panel:#111722;--panel2:#171e2a;--panel3:#0d131c;--line:#293344;
+  --text:#eef3f8;--muted:#9aa7b7;--accent:#7aa7ff;--accent2:#a9c5ff;--good:#74d69d;
+  --warn:#f6cc72;--danger:#ff9b9b;--shadow:0 14px 40px rgba(0,0,0,.22)
+}
+*{box-sizing:border-box}
+html{color-scheme:dark;scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,#080b10 0%,#0d121a 100%);color:var(--text);font:15px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans TC","Noto Sans SC",sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+a{color:var(--accent2)}
+.app{max-width:1240px;margin:0 auto;padding:20px 16px 48px}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:16px}
+.brand h1{margin:0;font-size:clamp(26px,4.4vw,44px);line-height:1.08;letter-spacing:-.035em}
+.brand p{margin:8px 0 0;max-width:820px;color:var(--muted)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.langs{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.langbtn{appearance:none;border:0;border-right:1px solid var(--line);padding:9px 11px;background:transparent;color:var(--muted)}
+.langbtn:last-child{border-right:0}.langbtn.active{background:var(--accent);color:#07101e;font-weight:800}
+.badge{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:8px 11px;border-radius:999px;font-size:12px}
+.notice{border:1px solid #574b2d;background:#211d13;color:#eadcab;padding:12px 14px;border-radius:14px;margin-bottom:14px}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 14px;border-radius:11px}
+.tab.active{border-color:var(--accent);background:#16243a;color:#dce8ff}
+.panel{display:none}.panel.active{display:block}
+.card{background:rgba(17,23,34,.97);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+.card.flat{box-shadow:none}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}.span12{grid-column:span 12}.span8{grid-column:span 8}.span7{grid-column:span 7}.span6{grid-column:span 6}.span5{grid-column:span 5}.span4{grid-column:span 4}.span3{grid-column:span 3}
+label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+input,select{width:100%;min-height:44px;background:#0c1119;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;outline:none}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{appearance:none;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:10px 12px;min-height:42px}.btn.primary{background:var(--accent);color:#07101e;border-color:var(--accent);font-weight:800}.btn.ghost{background:transparent;color:var(--muted)}
+.controls{margin-bottom:14px}.meta{color:var(--muted);font-size:12px}.statusline{padding-top:11px;color:var(--muted)}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:var(--panel);-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:940px}th,td{padding:10px 11px;border-bottom:1px solid #242d3a;text-align:right;white-space:nowrap}th{position:sticky;top:0;z-index:2;background:#171e2a;color:#b9c4d0;font-size:11px;text-transform:uppercase;letter-spacing:.045em}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}tbody tr:hover{background:#151c27}.rank{font-weight:850}.top3{color:var(--warn)}
+.playerCell strong{font-size:14px}.playerCell .meta{margin-top:2px}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}.pagerActions{display:flex;gap:8px}.pager .btn{min-width:86px}
+.mobileList{display:none}.mrow{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:13px;margin-bottom:9px}.mrowTop{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.mrank{font-weight:900;color:var(--warn);min-width:30px}.mname{font-weight:800;flex:1}.mscore{font-size:24px;font-weight:900}.mstats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}.mstat{background:var(--panel3);border-radius:9px;padding:7px 8px}.mstat b{display:block}.mstat span{color:var(--muted);font-size:10px}
+.compareHeader{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.name{font-size:22px;font-weight:850;letter-spacing:-.02em}.score{font-size:48px;font-weight:900;line-height:1;letter-spacing:-.05em;margin:12px 0 10px}.score small{font-size:15px;color:var(--muted);letter-spacing:0}.winner{color:var(--good)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}.pill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:11px;color:var(--muted);background:#0e141d}.pill strong{color:var(--text)}
+.quality{margin-top:11px;color:var(--muted);font-size:11px}
+.metricGroup{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}.metricGroup:first-child{border-top:0;padding-top:0;margin-top:0}.metricTitle{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px}.metricTitle b{font-size:13px}.metricTitle span{font-size:12px;color:var(--muted)}
+.metricRow{display:grid;grid-template-columns:minmax(90px,145px) 1fr 55px;gap:9px;align-items:center;margin:7px 0}.bar{height:10px;background:#0a0f16;border:1px solid #222b39;border-radius:999px;overflow:hidden}.fillA,.fillB{height:100%}.fillA{background:linear-gradient(90deg,#6f9ef5,#a4c2ff)}.fillB{background:linear-gradient(90deg,#8b95a5,#c0c8d3);opacity:.8}
+.rawTable table{min-width:720px}
+.rulesHero{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}.rulesHero h2{margin:0}.rulesHero p{margin:6px 0 0;color:var(--muted);max-width:760px}
+.ruleGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.ruleCard{border:1px solid var(--line);background:var(--panel3);border-radius:13px;padding:13px}.ruleCard h3{margin:0 0 7px;font-size:15px}.ruleCard ul{padding-left:18px;margin:6px 0;color:#cbd3de}.ruleCard li{margin:4px 0}.formula{display:block;background:#080d14;border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-top:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#dce7fa;overflow:auto}
+.weightBox{margin-top:14px}.weightHeader{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.weightHeader h3{margin:0}.weightRows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.weightRow{border:1px solid var(--line);border-radius:11px;background:var(--panel3);padding:10px}.weightRowTop{display:flex;justify-content:space-between;gap:8px}.weightRow input[type="range"]{padding:0;min-height:34px;border:0;background:transparent}.weightTotal{font-weight:800}.presetRow{display:flex;gap:8px;flex-wrap:wrap}.presetRow .btn{font-size:12px;min-height:36px;padding:7px 10px}
+.advGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px}.adv{border:1px solid var(--line);background:var(--panel3);border-radius:10px;padding:8px}.adv b{display:block;font-size:16px}.adv span{font-size:10px;color:var(--muted)}
+.sourceList{margin:10px 0 0;padding-left:18px;color:var(--muted)}.sourceList li{margin:5px 0}.foot{margin-top:16px;color:var(--muted);font-size:11px}
+.loading,.empty{padding:28px;text-align:center;color:var(--muted)}.err{color:var(--danger)}
+@media(max-width:900px){.span8,.span7,.span6,.span5,.span4,.span3{grid-column:span 12}.ruleGrid,.weightRows{grid-template-columns:1fr}.advGrid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){
+  .app{padding:14px 12px 36px}.topbar{margin-bottom:12px}.brand p{font-size:13px}.toolbar{width:100%;justify-content:space-between}.badge{max-width:55%;text-align:right}
+  .desktopTable{display:none}.mobileList{display:block}.mstats{grid-template-columns:repeat(3,1fr)}.score{font-size:42px}.metricRow{grid-template-columns:90px 1fr 46px}.metricRow>div:first-child{font-size:11px}.advGrid{grid-template-columns:repeat(2,1fr)}
+  .tabs{margin-left:-2px;margin-right:-2px}.tab{padding:9px 12px}.card{padding:13px;border-radius:14px}.notice{font-size:12px}.pager{justify-content:center}.pager>div:first-child{width:100%;text-align:center}
+}
+@media(max-width:400px){.mstats{grid-template-columns:repeat(2,1fr)}.langs{width:100%}.langbtn{flex:1}.badge{max-width:none}.toolbar{gap:7px}.advGrid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand"><h1 data-i18n="title">NBA 歷史地位量化排名器</h1><p data-i18n="subtitle">涵蓋歷史球員、Top 100、兩兩比較、可調權重與完整量化標準。</p></div>
+    <div class="toolbar">
+      <div class="langs" role="group" aria-label="Language">
+        <button class="langbtn" data-lang="en">English</button><button class="langbtn active" data-lang="zh-Hant">繁體中文</button><button class="langbtn" data-lang="zh-Hans">简体中文</button>
+      </div>
+      <div class="badge" id="dataBadge">資料載入中…</div>
+    </div>
+  </header>
+
+  <div class="notice" data-i18n="notice">模型以公開歷史資料為底層，並補入 2024-25 與 2025-26 的主要獎項。排名是量化模型結果，不是 NBA 官方排名。</div>
+
+  <nav class="tabs" aria-label="Sections">
+    <button class="tab active" data-tab="ranking" data-i18n="tabRanking">Top 100 / 全部球員</button>
+    <button class="tab" data-tab="compare" data-i18n="tabCompare">兩兩比較</button>
+    <button class="tab" data-tab="method" data-i18n="tabMethod">量化標準</button>
+    <button class="tab" data-tab="weights" data-i18n="tabWeights">權重設定</button>
+  </nav>
+
+  <section id="ranking" class="panel active">
+    <div class="card controls flat">
+      <div class="grid">
+        <div class="span6"><label for="search" data-i18n="searchLabel">搜尋球員</label><input id="search" data-ph="searchPlaceholder" placeholder="例如 Michael Jordan、Kobe Bryant、Karl Malone…"></div>
+        <div class="span3"><label for="scope" data-i18n="scopeLabel">顯示範圍</label><select id="scope"><option value="top100" data-i18n="scopeTop100">Top 100</option><option value="all" data-i18n="scopeAll">全部球員</option></select></div>
+        <div class="span3"><label data-i18n="statusLabel">資料狀態</label><div id="status" class="statusline">正在取得歷史資料…</div></div>
+      </div>
+    </div>
+
+    <div class="desktopTable tablewrap"><table><thead><tr>
+      <th>#</th><th data-i18n="player">球員</th><th data-i18n="score">總分</th><th>MVP</th><th>FMVP</th><th data-i18n="titles">冠軍</th><th>NBA 1st</th><th>All-Star</th><th>DPOY</th><th data-i18n="seasons">賽季</th>
+    </tr></thead><tbody id="rankBody"><tr><td colspan="10" class="loading">載入中…</td></tr></tbody></table></div>
+    <div class="mobileList" id="mobileRank"><div class="loading">載入中…</div></div>
+    <div class="pager"><div class="meta" id="pageInfo"></div><div class="pagerActions"><button class="btn ghost" id="prevPage" data-i18n="prev">上一頁</button><button class="btn ghost" id="nextPage" data-i18n="next">下一頁</button></div></div>
+  </section>
+
+  <section id="compare" class="panel">
+    <div class="card flat" style="margin-bottom:14px"><div class="grid">
+      <div class="span6"><label for="p1" data-i18n="playerA">球員 A</label><select id="p1"></select></div>
+      <div class="span6"><label for="p2" data-i18n="playerB">球員 B</label><select id="p2"></select></div>
+    </div></div>
+    <div class="grid">
+      <div class="span6 card" id="card1"></div><div class="span6 card" id="card2"></div>
+      <div class="span12 card"><div class="name" data-i18n="categoryCompare">分項比較</div><div id="breakdown" style="margin-top:10px"></div></div>
+      <div class="span12 card rawTable"><div class="name" data-i18n="rawResume">履歷與數據</div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th data-i18n="metric">項目</th><th id="h1">A</th><th id="h2">B</th></tr></thead><tbody id="rawBody"></tbody></table></div></div>
+    </div>
+  </section>
+
+  <section id="method" class="panel">
+    <div class="card rulesHero"><div><h2 data-i18n="methodTitle">100 分制量化標準</h2><p data-i18n="methodIntro">每名球員先得到六個 0–100 的分項分數，再依權重加權成總分。早期年代缺少某些正式獎項時，模型會跳過不可觀測項目並重新正規化，而不是直接當成 0 分。</p></div><div class="badge" data-i18n="defaultWeights">預設權重 25 / 25 / 20 / 10 / 10 / 10</div></div>
+    <div class="ruleGrid">
+      <div class="ruleCard"><h3 data-i18n="peakTitle">1. 巔峰統治力 Peak</h3><ul><li data-i18n="peak1">MVP：4.5 點 / 次</li><li data-i18n="peak2">All-NBA 1st：0.9 點 / 次</li><li data-i18n="peak3">All-NBA 2nd：0.25 點 / 次</li><li data-i18n="peak4">原始分封頂 25，再換算為 0–100 分項。</li></ul><code class="formula">Peak = min(25, 4.5×MVP + 0.9×NBA1 + 0.25×NBA2)</code></div>
+      <div class="ruleCard"><h3 data-i18n="playoffTitle">2. 季後賽 / 冠軍核心 Playoff Legacy</h3><ul><li data-i18n="play1">FMVP：4.5 點 / 次</li><li data-i18n="play2">每枚冠軍戒指：0.45 點基礎值</li><li data-i18n="play3">非 FMVP 冠軍會依 MVP / All-NBA 履歷估算「核心冠軍代理值」，避免把 Robert Horry 與第一核心冠軍視為等價。</li><li data-i18n="play4">1969 年 FMVP 設立前，使用 MVP / All-NBA 1st 做有限代理修正。</li></ul><code class="formula">CoreFactor = min(1.5, .25 + .35×MVP + .12×NBA1 + .05×NBA2)\nPlayoff = min(25, 4.5×FMVP + .45×Titles + CoreFactor×max(0,Titles−FMVP) + EarlyEraProxy)</code></div>
+      <div class="ruleCard"><h3 data-i18n="sustainTitle">3. 長期頂尖 Sustained Elite</h3><ul><li data-i18n="sustain1">All-NBA 1st：1.0 / 次</li><li data-i18n="sustain2">All-NBA 2nd：0.65 / 次</li><li data-i18n="sustain3">All-NBA 3rd：0.40 / 次</li><li data-i18n="sustain4">All-Star：0.25 / 次</li></ul><code class="formula">Sustained = min(20, NBA1 + .65×NBA2 + .4×NBA3 + .25×AllStar)</code></div>
+      <div class="ruleCard"><h3 data-i18n="defTitle">4. 防守履歷 Defense</h3><ul><li data-i18n="def1">DPOY：2.5 / 次</li><li data-i18n="def2">All-Defense 1st：0.65 / 次</li><li data-i18n="def3">All-Defense 2nd：0.35 / 次</li><li data-i18n="def4">1969 年以前沒有 All-Defense，該年代不直接記 0 分。</li></ul><code class="formula">Defense = min(10, 2.5×DPOY + .65×DEF1 + .35×DEF2)</code></div>
+      <div class="ruleCard"><h3 data-i18n="lonTitle">5. 生涯長度 Longevity</h3><ul><li data-i18n="lon1">以 NBA / BAA / ABA 賽季數計算。</li><li data-i18n="lon2">16 季以上達到此分項滿分。</li></ul><code class="formula">Longevity = min(10, 2 + .5×Seasons)</code></div>
+      <div class="ruleCard"><h3 data-i18n="prodTitle">6. 生涯產量 Production</h3><ul><li data-i18n="prod1">生涯 PPG 最多 5 點</li><li data-i18n="prod2">RPG 最多 2 點、APG 最多 2 點</li><li data-i18n="prod3">SPG + BPG 最多 1 點；1974 年以前無完整抄截 / 阻攻資料時重新正規化。</li><li data-i18n="prod4">產量只佔 10% 預設權重，降低年代與節奏偏差。</li></ul><code class="formula">Production = min(5,PPG/6)+min(2,RPG/6)+min(2,APG/5)+min(1,(SPG+BPG)/3)</code></div>
+    </div>
+    <div class="card flat" style="margin-top:14px"><h3 style="margin-top:0" data-i18n="eraTitle">年代修正與模型限制</h3><ul class="sourceList"><li data-i18n="era1">FMVP 自 1969 年開始；All-Defense 自 1968-69 開始；抄截與阻攻自 1973-74 才完整記錄。</li><li data-i18n="era2">模型不直接加入名人堂、人氣、球鞋文化或媒體聲量。</li><li data-i18n="era3">「核心冠軍代理值」是透明的數學近似，不等於人工逐冠判定角色，因此仍應搭配球員頁面與歷史脈絡解讀。</li><li data-i18n="era4">2025-26 PER / WS / WS/48 / BPM / VORP 僅作資訊展示，不納入總分，避免歷史年代缺資料造成不公平。</li></ul></div>
+  </section>
+
+  <section id="weights" class="panel">
+    <div class="card weightBox">
+      <div class="weightHeader"><div><h3 data-i18n="weightTitle">自訂歷史地位權重</h3><div class="meta" data-i18n="weightIntro">調整後 Top 100 與兩兩比較會即時重算。權重總和不必剛好 100，模型會自動正規化。</div></div><div class="weightTotal"><span data-i18n="weightTotal">目前總權重</span>：<span id="weightTotal">100</span></div></div>
+      <div class="presetRow"><button class="btn primary" data-preset="default" data-i18n="presetDefault">預設平衡</button><button class="btn" data-preset="peak" data-i18n="presetPeak">巔峰優先</button><button class="btn" data-preset="playoff" data-i18n="presetPlayoff">季後賽優先</button><button class="btn" data-preset="longevity" data-i18n="presetLongevity">長期累積優先</button></div>
+      <div class="weightRows" id="weightRows" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <div class="foot" id="footText">資料來源：公開 Basketball-Reference 衍生資料集，另依 NBA.com / Basketball-Reference 公開歷史獎項與 2025-26 資料校正。</div>
+</div>
+<script>
+(function(){
+'use strict';
+const URLS={
+ career:'https://raw.githubusercontent.com/wojcikbart/NBA-HallOfFame/refs/heads/main/data/Player%20Career%20Info.csv',
+ avg:'https://raw.githubusercontent.com/wojcikbart/NBA-HallOfFame/refs/heads/main/data/Career%20Averages.csv',
+ teams:'https://raw.githubusercontent.com/wojcikbart/NBA-HallOfFame/refs/heads/main/data/All%20League%20Teams.csv',
+ awards:'https://raw.githubusercontent.com/wojcikbart/NBA-HallOfFame/refs/heads/main/data/Player%20Awards.csv',
+ stars:'https://raw.githubusercontent.com/wojcikbart/NBA-HallOfFame/refs/heads/main/data/All%20Star%20Appearances.csv',
+ champs:'https://raw.githubusercontent.com/wojcikbart/NBA-HallOfFame/refs/heads/main/data/MVPs%20and%20Championships.csv',
+ adv2026:'https://raw.githubusercontent.com/SameerKabir/nba-player-advanced-analytics-2026/refs/heads/main/basketball_reference_2026_player_advanced_stats.csv'
+};
+const I18N={
+'en':{
+ title:'NBA All-Time Legacy Ranker',subtitle:'All-time player database, Top 100, head-to-head comparisons, adjustable weights and transparent scoring rules.',notice:'The model uses public historical data as its base and patches major 2024-25 and 2025-26 awards. Rankings are model outputs, not official NBA rankings.',tabRanking:'Top 100 / All players',tabCompare:'Head-to-head',tabMethod:'Scoring standard',tabWeights:'Weights',searchLabel:'Search player',searchPlaceholder:'e.g. Michael Jordan, Kobe Bryant, Karl Malone…',scopeLabel:'Display',scopeTop100:'Top 100',scopeAll:'All players',statusLabel:'Data status',player:'Player',score:'Score',titles:'Titles',seasons:'Seasons',prev:'Previous',next:'Next',playerA:'Player A',playerB:'Player B',categoryCompare:'Category comparison',rawResume:'Résumé & stats',metric:'Metric',methodTitle:'100-point scoring standard',methodIntro:'Each player receives six category scores from 0–100, then a weighted total. When an early era lacks an official award or tracked statistic, the unavailable category is excluded and the weights are renormalized instead of assigning a zero.',defaultWeights:'Default weights 25 / 25 / 20 / 10 / 10 / 10',peakTitle:'1. Peak dominance',peak1:'MVP: 4.5 raw points each',peak2:'All-NBA First Team: 0.9 each',peak3:'All-NBA Second Team: 0.25 each',peak4:'Raw score caps at 25, then converts to a 0–100 category score.',playoffTitle:'2. Playoff / championship legacy',play1:'Finals MVP: 4.5 raw points each',play2:'Every championship: 0.45 base points',play3:'Non-FMVP titles receive a transparent core-title proxy based on MVP and All-NBA résumé, so a role-player ring is not treated like a first-option ring.',play4:'Before the Finals MVP era (1969), MVP / All-NBA First Team provides a limited proxy.',sustainTitle:'3. Sustained elite play',sustain1:'All-NBA First Team: 1.0 each',sustain2:'All-NBA Second Team: 0.65 each',sustain3:'All-NBA Third Team: 0.40 each',sustain4:'All-Star: 0.25 each',defTitle:'4. Defensive résumé',def1:'DPOY: 2.5 each',def2:'All-Defense First Team: 0.65 each',def3:'All-Defense Second Team: 0.35 each',def4:'Players whose careers ended before All-Defense existed are not assigned a zero.',lonTitle:'5. Longevity',lon1:'Based on NBA / BAA / ABA seasons played.',lon2:'16 or more seasons reaches the category maximum.',prodTitle:'6. Career production',prod1:'Career PPG: up to 5 raw points',prod2:'RPG up to 2; APG up to 2',prod3:'SPG + BPG up to 1; pre-1974 players are renormalized because steals and blocks were not fully tracked.',prod4:'Production defaults to only 10% of the total to reduce era and pace bias.',eraTitle:'Era adjustments & model limits',era1:'Finals MVP began in 1969; All-Defense began in 1968-69; steals and blocks became official in 1973-74.',era2:'Hall of Fame status, popularity, shoe culture and media visibility do not directly add points.',era3:'The core-title proxy is a transparent mathematical approximation, not a hand-labeled role for every title.',era4:'2025-26 PER / WS / WS/48 / BPM / VORP are displayed for context only and are not scored, preserving fairness for older eras.',weightTitle:'Customize legacy weights',weightIntro:'Top 100 and comparisons recalculate instantly. Weights do not need to sum to 100; the model normalizes them automatically.',weightTotal:'Current total weight',presetDefault:'Balanced default',presetPeak:'Peak-heavy',presetPlayoff:'Playoff-heavy',presetLongevity:'Longevity-heavy',loading:'Loading…',loaded:'Loaded',playersWord:'players',top100Ready:'Top 100 calculated',loadFail:'Data load failed',noResults:'No matching players',page:'Page',of:'of',showing:'Showing',advanced:'2025-26 advanced',noAdvanced:'No 2025-26 advanced data',seasonWord:'seasons',champWord:'titles',peak:'Peak',playoff:'Playoffs / titles',sustained:'Sustained elite',defense:'Defense',longevity:'Longevity',production:'Production',foot:'Sources: public Basketball-Reference-derived datasets, with 2024-25 and 2025-26 corrections from NBA.com / Basketball-Reference public records.'
+},
+'zh-Hant':{
+ title:'NBA 歷史地位量化排名器',subtitle:'涵蓋歷史球員、Top 100、兩兩比較、可調權重與完整量化標準。',notice:'模型以公開歷史資料為底層，並補入 2024-25 與 2025-26 的主要獎項。排名是量化模型結果，不是 NBA 官方排名。',tabRanking:'Top 100 / 全部球員',tabCompare:'兩兩比較',tabMethod:'量化標準',tabWeights:'權重設定',searchLabel:'搜尋球員',searchPlaceholder:'例如 Michael Jordan、Kobe Bryant、Karl Malone…',scopeLabel:'顯示範圍',scopeTop100:'Top 100',scopeAll:'全部球員',statusLabel:'資料狀態',player:'球員',score:'總分',titles:'冠軍',seasons:'賽季',prev:'上一頁',next:'下一頁',playerA:'球員 A',playerB:'球員 B',categoryCompare:'分項比較',rawResume:'履歷與數據',metric:'項目',methodTitle:'100 分制量化標準',methodIntro:'每名球員先得到六個 0–100 的分項分數，再依權重加權成總分。早期年代缺少某些正式獎項時，模型會跳過不可觀測項目並重新正規化，而不是直接當成 0 分。',defaultWeights:'預設權重 25 / 25 / 20 / 10 / 10 / 10',peakTitle:'1. 巔峰統治力 Peak',peak1:'MVP：4.5 點 / 次',peak2:'All-NBA 1st：0.9 點 / 次',peak3:'All-NBA 2nd：0.25 點 / 次',peak4:'原始分封頂 25，再換算為 0–100 分項。',playoffTitle:'2. 季後賽 / 冠軍核心 Playoff Legacy',play1:'FMVP：4.5 點 / 次',play2:'每枚冠軍戒指：0.45 點基礎值',play3:'非 FMVP 冠軍會依 MVP / All-NBA 履歷估算「核心冠軍代理值」，避免把角色球員戒指與第一核心冠軍視為等價。',play4:'1969 年 FMVP 設立前，使用 MVP / All-NBA 1st 做有限代理修正。',sustainTitle:'3. 長期頂尖 Sustained Elite',sustain1:'All-NBA 1st：1.0 / 次',sustain2:'All-NBA 2nd：0.65 / 次',sustain3:'All-NBA 3rd：0.40 / 次',sustain4:'All-Star：0.25 / 次',defTitle:'4. 防守履歷 Defense',def1:'DPOY：2.5 / 次',def2:'All-Defense 1st：0.65 / 次',def3:'All-Defense 2nd：0.35 / 次',def4:'1969 年以前沒有 All-Defense，該年代不直接記 0 分。',lonTitle:'5. 生涯長度 Longevity',lon1:'以 NBA / BAA / ABA 賽季數計算。',lon2:'16 季以上達到此分項滿分。',prodTitle:'6. 生涯產量 Production',prod1:'生涯 PPG 最多 5 點',prod2:'RPG 最多 2 點、APG 最多 2 點',prod3:'SPG + BPG 最多 1 點；1974 年以前無完整抄截 / 阻攻資料時重新正規化。',prod4:'產量只佔 10% 預設權重，降低年代與節奏偏差。',eraTitle:'年代修正與模型限制',era1:'FMVP 自 1969 年開始；All-Defense 自 1968-69 開始；抄截與阻攻自 1973-74 才完整記錄。',era2:'模型不直接加入名人堂、人氣、球鞋文化或媒體聲量。',era3:'「核心冠軍代理值」是透明的數學近似，不等於人工逐冠判定角色。',era4:'2025-26 PER / WS / WS/48 / BPM / VORP 僅作資訊展示，不納入總分，避免歷史年代缺資料造成不公平。',weightTitle:'自訂歷史地位權重',weightIntro:'調整後 Top 100 與兩兩比較會即時重算。權重總和不必剛好 100，模型會自動正規化。',weightTotal:'目前總權重',presetDefault:'預設平衡',presetPeak:'巔峰優先',presetPlayoff:'季後賽優先',presetLongevity:'長期累積優先',loading:'載入中…',loaded:'成功載入',playersWord:'名球員',top100Ready:'Top 100 已計算',loadFail:'資料載入失敗',noResults:'沒有符合的球員',page:'第',of:'頁 / 共',showing:'顯示',advanced:'2025-26 進階數據',noAdvanced:'無 2025-26 進階數據',seasonWord:'季',champWord:'冠',peak:'巔峰',playoff:'季後賽 / 冠軍',sustained:'長期頂尖',defense:'防守',longevity:'生涯長度',production:'生涯產量',foot:'資料來源：公開 Basketball-Reference 衍生資料集，另依 NBA.com / Basketball-Reference 公開歷史獎項與 2025-26 資料校正。'
+},
+'zh-Hans':{
+ title:'NBA 历史地位量化排名器',subtitle:'涵盖历史球员、Top 100、两两对比、可调权重与完整量化标准。',notice:'模型以公开历史数据为底层，并补入 2024-25 与 2025-26 的主要奖项。排名是量化模型结果，不是 NBA 官方排名。',tabRanking:'Top 100 / 全部球员',tabCompare:'两两对比',tabMethod:'量化标准',tabWeights:'权重设置',searchLabel:'搜索球员',searchPlaceholder:'例如 Michael Jordan、Kobe Bryant、Karl Malone…',scopeLabel:'显示范围',scopeTop100:'Top 100',scopeAll:'全部球员',statusLabel:'数据状态',player:'球员',score:'总分',titles:'冠军',seasons:'赛季',prev:'上一页',next:'下一页',playerA:'球员 A',playerB:'球员 B',categoryCompare:'分项对比',rawResume:'履历与数据',metric:'项目',methodTitle:'100 分制量化标准',methodIntro:'每名球员先得到六个 0–100 的分项分数，再按权重加权为总分。早期年代缺少某些正式奖项时，模型会跳过不可观测项目并重新归一化，而不是直接记为 0 分。',defaultWeights:'默认权重 25 / 25 / 20 / 10 / 10 / 10',peakTitle:'1. 巅峰统治力 Peak',peak1:'MVP：4.5 点 / 次',peak2:'All-NBA 1st：0.9 点 / 次',peak3:'All-NBA 2nd：0.25 点 / 次',peak4:'原始分封顶 25，再换算为 0–100 分项。',playoffTitle:'2. 季后赛 / 冠军核心 Playoff Legacy',play1:'FMVP：4.5 点 / 次',play2:'每枚冠军戒指：0.45 点基础值',play3:'非 FMVP 冠军会按 MVP / All-NBA 履历估算“核心冠军代理值”，避免把角色球员戒指与第一核心冠军视为等价。',play4:'1969 年 FMVP 设立前，使用 MVP / All-NBA 1st 做有限代理修正。',sustainTitle:'3. 长期顶尖 Sustained Elite',sustain1:'All-NBA 1st：1.0 / 次',sustain2:'All-NBA 2nd：0.65 / 次',sustain3:'All-NBA 3rd：0.40 / 次',sustain4:'All-Star：0.25 / 次',defTitle:'4. 防守履历 Defense',def1:'DPOY：2.5 / 次',def2:'All-Defense 1st：0.65 / 次',def3:'All-Defense 2nd：0.35 / 次',def4:'1969 年以前没有 All-Defense，该年代不直接记 0 分。',lonTitle:'5. 生涯长度 Longevity',lon1:'按 NBA / BAA / ABA 赛季数计算。',lon2:'16 季以上达到此分项满分。',prodTitle:'6. 生涯产量 Production',prod1:'生涯 PPG 最多 5 点',prod2:'RPG 最多 2 点、APG 最多 2 点',prod3:'SPG + BPG 最多 1 点；1974 年以前无完整抢断 / 盖帽数据时重新归一化。',prod4:'产量只占 10% 默认权重，降低年代与节奏偏差。',eraTitle:'年代修正与模型限制',era1:'FMVP 自 1969 年开始；All-Defense 自 1968-69 开始；抢断与盖帽自 1973-74 才完整记录。',era2:'模型不直接加入名人堂、人氣、球鞋文化或媒体声量。',era3:'“核心冠军代理值”是透明的数学近似，不等于人工逐冠判定角色。',era4:'2025-26 PER / WS / WS/48 / BPM / VORP 仅作信息展示，不纳入总分，避免历史年代缺数据造成不公平。',weightTitle:'自定义历史地位权重',weightIntro:'调整后 Top 100 与两两对比会即时重算。权重总和不必刚好 100，模型会自动归一化。',weightTotal:'当前总权重',presetDefault:'默认平衡',presetPeak:'巅峰优先',presetPlayoff:'季后赛优先',presetLongevity:'长期累积优先',loading:'加载中…',loaded:'成功加载',playersWord:'名球员',top100Ready:'Top 100 已计算',loadFail:'数据加载失败',noResults:'没有符合的球员',page:'第',of:'页 / 共',showing:'显示',advanced:'2025-26 高阶数据',noAdvanced:'无 2025-26 高阶数据',seasonWord:'季',champWord:'冠',peak:'巅峰',playoff:'季后赛 / 冠军',sustained:'长期顶尖',defense:'防守',longevity:'生涯长度',production:'生涯产量',foot:'数据来源：公开 Basketball-Reference 衍生数据集，另依据 NBA.com / Basketball-Reference 公开历史奖项与 2025-26 数据校正。'
+}};
+let lang='zh-Hant';
+const defaultWeights={peak:25,playoff:25,sustained:20,defense:10,longevity:10,production:10};
+let weights={...defaultWeights},players=[],sorted=[],top100=[],page=1,pageSize=50,advancedLoaded=false;
+const recent={
+ mvp:{'Shai Gilgeous-Alexander':2},
+ dpoy:{'Evan Mobley':1,'Victor Wembanyama':1},
+ fmvp:{'Nikola Jokic':1,'Jaylen Brown':1,'Shai Gilgeous-Alexander':1,'Jalen Brunson':1},
+ nba1_2025:['Giannis Antetokounmpo','Shai Gilgeous-Alexander','Nikola Jokic','Donovan Mitchell','Jayson Tatum'],
+ nba2_2025:['Jalen Brunson','Stephen Curry','Anthony Edwards','LeBron James','Evan Mobley'],
+ nba3_2025:['Cade Cunningham','Tyrese Haliburton','James Harden','Karl-Anthony Towns','Jalen Williams'],
+ nba1_2026:['Shai Gilgeous-Alexander','Nikola Jokic','Victor Wembanyama','Luka Doncic','Cade Cunningham'],
+ nba2_2026:['Jaylen Brown','Kawhi Leonard','Donovan Mitchell','Kevin Durant','Jalen Brunson'],
+ nba3_2026:['Tyrese Maxey','Jamal Murray','Jalen Johnson','Jalen Duren','Chet Holmgren'],
+ def1_2025:['Dyson Daniels','Luguentz Dort','Draymond Green','Evan Mobley','Amen Thompson'],
+ def2_2025:['Toumani Camara','Rudy Gobert','Jaren Jackson Jr.','Jalen Williams','Ivica Zubac'],
+ def1_2026:['Victor Wembanyama','Chet Holmgren','Ausar Thompson','Rudy Gobert','Derrick White'],
+ def2_2026:['Scottie Barnes','Cason Wallace','Bam Adebayo','OG Anunoby','Dyson Daniels'],
+ allstar_2025:['Jalen Brunson','Donovan Mitchell','Karl-Anthony Towns','Jayson Tatum','Giannis Antetokounmpo','Damian Lillard','Darius Garland','Jaylen Brown','Cade Cunningham','Tyler Herro','Evan Mobley','Pascal Siakam','Shai Gilgeous-Alexander','Stephen Curry','Nikola Jokic','Kevin Durant','LeBron James','Anthony Edwards','Anthony Davis','James Harden','Jaren Jackson Jr.','Alperen Sengun','Jalen Williams','Victor Wembanyama'],
+ allstar_2026:['Giannis Antetokounmpo','Jaylen Brown','Jalen Brunson','Cade Cunningham','Tyrese Maxey','Scottie Barnes','Jalen Duren','Jalen Johnson','Donovan Mitchell','Norman Powell','Pascal Siakam','Karl-Anthony Towns','Stephen Curry','Luka Doncic','Shai Gilgeous-Alexander','Nikola Jokic','Victor Wembanyama','Deni Avdija','Devin Booker','Kevin Durant','Anthony Edwards','Chet Holmgren','LeBron James','Jamal Murray'],
+ champs2025:['Shai Gilgeous-Alexander','Jalen Williams','Chet Holmgren','Luguentz Dort','Alex Caruso','Isaiah Hartenstein','Isaiah Joe','Cason Wallace','Aaron Wiggins','Jaylin Williams','Kenrich Williams','Ousmane Dieng','Branden Carlson','Alex Ducas','Adam Flagler'],
+ champs2026:['Jose Alvarado','OG Anunoby','Mikal Bridges','Jalen Brunson','Jordan Clarkson','Pacome Dadiet','Mohamed Diawara','Tosan Evbuomwan','Josh Hart','Miles McBride','Mitchell Robinson','Karl-Anthony Towns','Tyler Kolek','Landry Shamet','Ariel Hukporti','Guerschon Yabusele','Jeremy Sochan','Kevin McCullar Jr.']
+};
+const rookieFallback=[
+ {name:'Cooper Flagg',ppg:21.0,rpg:6.7,apg:4.5,spg:1.2,bpg:.9},
+ {name:'VJ Edgecombe',ppg:16.0,rpg:5.6,apg:4.2,spg:1.4,bpg:.5},
+ {name:'Kon Knueppel',ppg:18.5,rpg:5.3,apg:3.4,spg:.7,bpg:.2},
+ {name:'Dylan Harper',ppg:11.8,rpg:3.4,apg:3.9,spg:.8,bpg:.3},
+ {name:'Cedric Coward',ppg:13.6,rpg:5.9,apg:2.8,spg:.6,bpg:.4}
+];
+function t(k){return (I18N[lang]&&I18N[lang][k])||I18N['en'][k]||k}
+function norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.*’']/g,'').replace(/[^a-zA-Z0-9\s-]/g,'').replace(/\s+/g,' ').trim().toLowerCase()}
+function num(v){const n=Number(v);return Number.isFinite(n)?n:0}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function parseCSV(text){const rows=[];let row=[],field='',q=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'){if(q&&n==='"'){field+='"';i++}else q=!q}else if(c===','&&!q){row.push(field);field=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(field);field='';if(row.some(x=>x!==''))rows.push(row);row=[]}else field+=c}if(field||row.length){row.push(field);rows.push(row)}if(!rows.length)return[];const h=rows[0].map(x=>x.trim());return rows.slice(1).map(r=>{const o={};h.forEach((k,i)=>o[k]=r[i]??'');return o})}
+async function get(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return parseCSV(await r.text())}
+function getNameMap(){const m=new Map();players.forEach(p=>{const k=norm(p.name);if(!m.has(k))m.set(k,p)});return m}
+function patchList(list,key){const m=getNameMap();list.forEach(name=>{const p=m.get(norm(name));if(p)p[key]=(p[key]||0)+1})}
+function patchObj(obj,key){const m=getNameMap();Object.entries(obj).forEach(([name,v])=>{const p=m.get(norm(name));if(p)p[key]=(p[key]||0)+v})}
+function ensureFallbackRookies(){const m=getNameMap();rookieFallback.forEach((r,i)=>{if(!m.has(norm(r.name))){players.push({id:'rookie_'+i,name:r.name,seasons:1,first_seas:2026,last_seas:2026,ppg:r.ppg,rpg:r.rpg,apg:r.apg,spg:r.spg,bpg:r.bpg,mvp:0,fmvp:0,champs:0,nba1:0,nba2:0,nba3:0,def1:0,def2:0,dpoy:0,allstar:0,per:null,ws:null,ws48:null,bpm:null,vorp:null})}})}
+function subScores(p){
+ const mvp=num(p.mvp),n1=num(p.nba1),n2=num(p.nba2),n3=num(p.nba3),fm=num(p.fmvp),ch=num(p.champs),dp=num(p.dpoy),d1=num(p.def1),d2=num(p.def2),as=num(p.allstar),yrs=num(p.seasons);
+ const peakRaw=Math.min(25,mvp*4.5+n1*.9+n2*.25);
+ const coreFactor=Math.min(1.5,.25+.35*mvp+.12*n1+.05*n2);
+ const earlyProxy=(num(p.first_seas)<1969)?Math.min(8,Math.max(0,ch-fm)*(.4*mvp+.15*n1)):0;
+ const playoffRaw=Math.min(25,fm*4.5+ch*.45+Math.max(0,ch-fm)*coreFactor+earlyProxy);
+ const sustainedRaw=Math.min(20,n1+n2*.65+n3*.4+as*.25);
+ const defenseRaw=Math.min(10,dp*2.5+d1*.65+d2*.35);
+ const longevityRaw=Math.min(10,2+yrs*.5);
+ let productionRaw=Math.min(5,num(p.ppg)/6)+Math.min(2,num(p.rpg)/6)+Math.min(2,num(p.apg)/5);
+ const stealsBlocksAvailable=num(p.last_seas)>=1974;
+ if(stealsBlocksAvailable) productionRaw+=Math.min(1,(num(p.spg)+num(p.bpg))/3); else productionRaw=productionRaw/9*10;
+ return {peak:peakRaw/25*100,playoff:playoffRaw/25*100,sustained:sustainedRaw/20*100,defense:num(p.last_seas)<1969?null:defenseRaw/10*100,longevity:longevityRaw/10*100,production:Math.min(10,productionRaw)/10*100,raw:{peakRaw,playoffRaw,sustainedRaw,defenseRaw,longevityRaw,productionRaw,coreFactor}};
+}
+function scorePlayer(p){const s=subScores(p);let total=0,den=0;Object.keys(weights).forEach(k=>{if(s[k]!==null&&weights[k]>0){total+=s[k]*weights[k];den+=weights[k]}});p.s={...s,total:den?total/den:0};return p.s.total}
+function rescore(){players.forEach(scorePlayer);sorted=players.slice().sort((a,b)=>b.s.total-a.s.total||b.mvp-a.mvp||b.fmvp-a.fmvp||a.name.localeCompare(b.name));top100=sorted.slice(0,100);page=1;renderRank();renderCompare();renderWeightRows()}
+function applyRecent(){
+ patchObj(recent.mvp,'mvp');patchObj(recent.dpoy,'dpoy');patchObj(recent.fmvp,'fmvp');
+ ['nba1_2025','nba1_2026'].forEach(k=>patchList(recent[k],'nba1'));['nba2_2025','nba2_2026'].forEach(k=>patchList(recent[k],'nba2'));['nba3_2025','nba3_2026'].forEach(k=>patchList(recent[k],'nba3'));
+ ['def1_2025','def1_2026'].forEach(k=>patchList(recent[k],'def1'));['def2_2025','def2_2026'].forEach(k=>patchList(recent[k],'def2'));
+ patchList(recent.allstar_2025,'allstar');patchList(recent.allstar_2026,'allstar');patchList(recent.champs2025,'champs');patchList(recent.champs2026,'champs');
+}
+async function applyAdvanced2026(){
+ try{
+  const rows=await get(URLS.adv2026);const m=getNameMap();const seen=new Set();
+  rows.forEach(r=>{
+    let name=String(r.Player||r.player||'').replace(/\*/g,'').trim();if(!name)return;const k=norm(name);if(seen.has(k)&&String(r.Team||r.Tm||'').match(/^\d+TM$/)===null)return;seen.add(k);
+    let p=m.get(k);if(!p){p={id:'adv_'+k.replace(/\s+/g,'_'),name,seasons:1,first_seas:2026,last_seas:2026,ppg:0,rpg:0,apg:0,spg:0,bpg:0,mvp:0,fmvp:0,champs:0,nba1:0,nba2:0,nba3:0,def1:0,def2:0,dpoy:0,allstar:0};players.push(p);m.set(k,p)}
+    if(num(p.last_seas)<2026){const add=Math.max(0,2026-num(p.last_seas));p.seasons=Math.max(1,num(p.seasons)+add);p.last_seas=2026}
+    p.per=r.PER!==''?num(r.PER):null;p.ws=r.WS!==''?num(r.WS):null;p.ws48=r['WS/48']!==''?num(r['WS/48']):null;p.bpm=r.BPM!==''?num(r.BPM):null;p.vorp=r.VORP!==''?num(r.VORP):null;
+  });advancedLoaded=true;
+ }catch(e){advancedLoaded=false;}
+}
+async function load(){
+ try{
+  const [career,avg,teams,awards,stars,champs]=await Promise.all([URLS.career,URLS.avg,URLS.teams,URLS.awards,URLS.stars,URLS.champs].map(get));
+  const byId=new Map(),byName=new Map();
+  career.forEach(r=>{const p={id:String(r.player_id),name:r.player,seasons:num(r.num_seasons),first_seas:num(r.first_seas),last_seas:num(r.last_seas),ppg:0,apg:0,rpg:0,spg:0,bpg:0,mvp:0,fmvp:0,champs:0,nba1:0,nba2:0,nba3:0,def1:0,def2:0,dpoy:0,allstar:0,per:null,ws:null,ws48:null,bpm:null,vorp:null};byId.set(String(r.player_id),p);if(!byName.has(norm(p.name)))byName.set(norm(p.name),p)});
+  avg.forEach(r=>{const p=byId.get(String(r.player_id));if(p)Object.assign(p,{ppg:num(r.ppg),apg:num(r.apg),rpg:num(r.rpg),spg:num(r.spg),bpg:num(r.bpg)})});
+  teams.forEach(r=>{const p=byId.get(String(r.player_id));if(p)Object.assign(p,{nba1:num(r['All-NBA 1st Team']),nba2:num(r['All-NBA 2nd Team']),nba3:num(r['All-NBA 3rd Team']),def1:num(r['All-Defense 1st Team']),def2:num(r['All-Defense 2nd Team'])})});
+  awards.forEach(r=>{const p=byId.get(String(r.player_id));if(p)Object.assign(p,{mvp:num(r['nba mvp']),dpoy:num(r.dpoy)})});
+  stars.forEach(r=>{const p=byName.get(norm(r.player));if(p)p.allstar=num(r.AllStarCount)});
+  players=[...byId.values()];const buckets=new Map();players.forEach(p=>{const k=norm(p.name);if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(p)});
+  champs.forEach(r=>{const list=buckets.get(norm(r.player))||[];const p=list.find(x=>x.first_seas===num(r.first_seas))||list[0];if(p){p.fmvp=num(r['Finals MVP']);p.champs=num(r.Championships)}});
+  ensureFallbackRookies();applyRecent();await applyAdvanced2026();
+  // apply 2026 season length to fallback rookies and active players not found in advanced only when known recent lists identify them
+  rescore();populateCompare();updateStatus();
+ }catch(e){document.getElementById('dataBadge').textContent=t('loadFail');document.getElementById('status').innerHTML='<span class="err">'+esc(t('loadFail'))+': '+esc(e.message)+'</span>';document.getElementById('rankBody').innerHTML='<tr><td colspan="10" class="empty err">'+esc(t('loadFail'))+'</td></tr>';document.getElementById('mobileRank').innerHTML='<div class="empty err">'+esc(t('loadFail'))+'</div>'}
+}
+function updateStatus(){document.getElementById('dataBadge').textContent=`${players.length.toLocaleString()} ${t('playersWord')} · ${t('top100Ready')}`;document.getElementById('status').textContent=`${t('loaded')} ${players.length.toLocaleString()} ${t('playersWord')}${advancedLoaded?' · '+t('advanced'):''}`}
+function currentRankRows(){const q=norm(document.getElementById('search').value);const scope=document.getElementById('scope').value;let data=scope==='top100'?top100:sorted;if(q)data=data.filter(p=>norm(p.name).includes(q));return data}
+function renderRank(){if(!players.length)return;const data=currentRankRows();const totalPages=Math.max(1,Math.ceil(data.length/pageSize));page=Math.min(page,totalPages);const start=(page-1)*pageSize,shown=data.slice(start,start+pageSize);const scope=document.getElementById('scope').value;const rankOf=p=>scope==='top100'?top100.indexOf(p)+1:sorted.indexOf(p)+1;
+ document.getElementById('rankBody').innerHTML=shown.length?shown.map(p=>{const r=rankOf(p);return `<tr><td class="rank ${r<=3?'top3':''}">${r}</td><td class="playerCell"><strong>${esc(p.name)}</strong><div class="meta">${p.first_seas||'?'}–${p.last_seas||'?'}</div></td><td><strong>${p.s.total.toFixed(1)}</strong></td><td>${p.mvp}</td><td>${p.fmvp}</td><td>${p.champs}</td><td>${p.nba1}</td><td>${p.allstar}</td><td>${p.dpoy}</td><td>${p.seasons}</td></tr>`}).join(''):`<tr><td colspan="10" class="empty">${esc(t('noResults'))}</td></tr>`;
+ document.getElementById('mobileRank').innerHTML=shown.length?shown.map(p=>{const r=rankOf(p);return `<div class="mrow"><div class="mrowTop"><div class="mrank">#${r}</div><div class="mname">${esc(p.name)}<div class="meta">${p.first_seas||'?'}–${p.last_seas||'?'}</div></div><div class="mscore">${p.s.total.toFixed(1)}</div></div><div class="mstats"><div class="mstat"><b>${p.mvp}</b><span>MVP</span></div><div class="mstat"><b>${p.fmvp}</b><span>FMVP</span></div><div class="mstat"><b>${p.champs}</b><span>${esc(t('titles'))}</span></div><div class="mstat"><b>${p.nba1}</b><span>NBA 1st</span></div><div class="mstat"><b>${p.allstar}</b><span>All-Star</span></div><div class="mstat"><b>${p.seasons}</b><span>${esc(t('seasons'))}</span></div></div></div>`}).join(''):`<div class="empty">${esc(t('noResults'))}</div>`;
+ document.getElementById('pageInfo').textContent=`${t('showing')} ${data.length} · ${t('page')} ${page} ${t('of')} ${totalPages}`;document.getElementById('prevPage').disabled=page<=1;document.getElementById('nextPage').disabled=page>=totalPages;
+}
+function populateCompare(){const opts=players.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${esc(p.id)}">${esc(p.name)} (${p.first_seas||'?'}–${p.last_seas||'?'})</option>`).join('');const a=document.getElementById('p1'),b=document.getElementById('p2');a.innerHTML=opts;b.innerHTML=opts;const mj=players.find(p=>norm(p.name)==='michael jordan'),lbj=players.find(p=>norm(p.name)==='lebron james');if(mj)a.value=mj.id;if(lbj)b.value=lbj.id;a.addEventListener('change',renderCompare);b.addEventListener('change',renderCompare);renderCompare()}
+function playerCard(p,other){const win=p.s.total>other.s.total;const adv=[['PER',p.per],['WS',p.ws],['WS/48',p.ws48],['BPM',p.bpm],['VORP',p.vorp]].filter(x=>x[1]!==null&&x[1]!==undefined);return `<div class="compareHeader"><div><div class="name">${esc(p.name)}</div><div class="meta">${p.first_seas||'?'}–${p.last_seas||'?'} · ${p.seasons} ${esc(t('seasonWord'))}</div></div></div><div class="score ${win?'winner':''}">${p.s.total.toFixed(1)} <small>/ 100</small></div><div class="pills"><span class="pill"><strong>${p.mvp}</strong> MVP</span><span class="pill"><strong>${p.fmvp}</strong> FMVP</span><span class="pill"><strong>${p.champs}</strong> ${esc(t('champWord'))}</span><span class="pill"><strong>${p.nba1}</strong> NBA 1st</span><span class="pill"><strong>${p.allstar}</strong> All-Star</span></div>${adv.length?`<div class="advGrid">${adv.map(([k,v])=>`<div class="adv"><b>${Number(v).toFixed(k==='WS/48'?3:1)}</b><span>${k}</span></div>`).join('')}</div><div class="quality">${esc(t('advanced'))}</div>`:`<div class="quality">${esc(t('noAdvanced'))}</div>`}`}
+function renderCompare(){if(!players.length)return;const a=players.find(p=>String(p.id)===document.getElementById('p1').value),b=players.find(p=>String(p.id)===document.getElementById('p2').value);if(!a||!b)return;document.getElementById('card1').innerHTML=playerCard(a,b);document.getElementById('card2').innerHTML=playerCard(b,a);document.getElementById('h1').textContent=a.name;document.getElementById('h2').textContent=b.name;
+ const cats=[['peak',t('peak')],['playoff',t('playoff')],['sustained',t('sustained')],['defense',t('defense')],['longevity',t('longevity')],['production',t('production')]];
+ document.getElementById('breakdown').innerHTML=cats.map(([k,label])=>{const av=a.s[k],bv=b.s[k];return `<div class="metricGroup"><div class="metricTitle"><b>${esc(label)}</b><span>${weights[k]}× weight</span></div><div class="metricRow"><div>${esc(a.name)}</div><div class="bar"><div class="fillA" style="width:${av===null?0:Math.max(0,Math.min(100,av))}%"></div></div><div>${av===null?'N/A':av.toFixed(1)}</div></div><div class="metricRow"><div>${esc(b.name)}</div><div class="bar"><div class="fillB" style="width:${bv===null?0:Math.max(0,Math.min(100,bv))}%"></div></div><div>${bv===null?'N/A':bv.toFixed(1)}</div></div></div>`}).join('');
+ const rows=[['MVP','mvp'],['FMVP','fmvp'],[t('titles'),'champs'],['All-NBA 1st','nba1'],['All-NBA 2nd','nba2'],['All-NBA 3rd','nba3'],['DPOY','dpoy'],['All-Defense 1st','def1'],['All-Defense 2nd','def2'],['All-Star','allstar'],[t('seasons'),'seasons'],['Career PPG','ppg'],['Career RPG','rpg'],['Career APG','apg'],['2025-26 PER','per'],['2025-26 WS','ws'],['2025-26 WS/48','ws48'],['2025-26 BPM','bpm'],['2025-26 VORP','vorp']];
+ document.getElementById('rawBody').innerHTML=rows.map(([label,k])=>`<tr><td>${esc(label)}</td><td>${formatVal(a[k],k)}</td><td>${formatVal(b[k],k)}</td></tr>`).join('')
+}
+function formatVal(v,k){if(v===null||v===undefined)return '—';if(['ppg','rpg','apg','per','ws','bpm','vorp'].includes(k))return Number(v).toFixed(1);if(k==='ws48')return Number(v).toFixed(3);return esc(v)}
+function renderWeightRows(){const labels={peak:t('peak'),playoff:t('playoff'),sustained:t('sustained'),defense:t('defense'),longevity:t('longevity'),production:t('production')};document.getElementById('weightRows').innerHTML=Object.keys(weights).map(k=>`<div class="weightRow"><div class="weightRowTop"><b>${esc(labels[k])}</b><span>${weights[k]}</span></div><input type="range" min="0" max="50" step="1" value="${weights[k]}" data-weight="${k}" aria-label="${esc(labels[k])}"></div>`).join('');document.getElementById('weightTotal').textContent=Object.values(weights).reduce((a,b)=>a+b,0);document.querySelectorAll('[data-weight]').forEach(el=>el.addEventListener('input',e=>{weights[e.target.dataset.weight]=num(e.target.value);rescore()}))}
+function setPreset(name){if(name==='default')weights={...defaultWeights};if(name==='peak')weights={peak:40,playoff:20,sustained:15,defense:8,longevity:7,production:10};if(name==='playoff')weights={peak:20,playoff:40,sustained:15,defense:8,longevity:7,production:10};if(name==='longevity')weights={peak:15,playoff:15,sustained:25,defense:10,longevity:25,production:10};rescore()}
+function applyLanguage(){document.documentElement.lang=lang;document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(I18N[lang][k]!==undefined)el.textContent=I18N[lang][k]});document.querySelectorAll('[data-ph]').forEach(el=>el.placeholder=t(el.dataset.ph));document.querySelectorAll('.langbtn').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));document.getElementById('footText').textContent=t('foot');updateStatus();renderRank();renderCompare();renderWeightRows()}
+// events
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.getElementById(btn.dataset.tab).classList.add('active')}));
+document.querySelectorAll('.langbtn').forEach(btn=>btn.addEventListener('click',()=>{lang=btn.dataset.lang;applyLanguage()}));
+document.getElementById('search').addEventListener('input',()=>{page=1;renderRank()});document.getElementById('scope').addEventListener('change',()=>{page=1;renderRank()});document.getElementById('prevPage').addEventListener('click',()=>{if(page>1){page--;renderRank();window.scrollTo({top:0,behavior:'smooth'})}});document.getElementById('nextPage').addEventListener('click',()=>{page++;renderRank();window.scrollTo({top:0,behavior:'smooth'})});document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>setPreset(b.dataset.preset)));
+renderWeightRows();load();
+})();
+</script>
+</body>
+</html>
