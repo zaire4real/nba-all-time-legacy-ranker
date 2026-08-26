@@ -52,7 +52,7 @@ table{width:100%;border-collapse:collapse;min-width:940px}th,td{padding:10px 11p
 .rawTable table{min-width:720px}
 .rulesHero{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}.rulesHero h2{margin:0}.rulesHero p{margin:6px 0 0;color:var(--muted);max-width:760px}
 .ruleGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.ruleCard{border:1px solid var(--line);background:var(--panel3);border-radius:13px;padding:13px}.ruleCard h3{margin:0 0 7px;font-size:15px}.ruleCard ul{padding-left:18px;margin:6px 0;color:#cbd3de}.ruleCard li{margin:4px 0}.formula{display:block;background:#080d14;border:1px solid var(--line);border-radius:9px;padding:9px 10px;margin-top:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#dce7fa;overflow:auto}
-.weightBox{margin-top:14px}.weightHeader{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.weightHeader h3{margin:0}.weightRows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.weightRow{border:1px solid var(--line);border-radius:11px;background:var(--panel3);padding:10px}.weightRowTop{display:flex;justify-content:space-between;gap:8px}.weightRow input[type="range"]{padding:0;min-height:34px;border:0;background:transparent}.weightTotal{font-weight:800}.presetRow{display:flex;gap:8px;flex-wrap:wrap}.presetRow .btn{font-size:12px;min-height:36px;padding:7px 10px}
+.weightBox{margin-top:14px}.weightHeader{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.weightHeader h3{margin:0}.weightRows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.weightRow{border:1px solid var(--line);border-radius:11px;background:var(--panel3);padding:10px}.weightRowTop{display:flex;justify-content:space-between;gap:8px}.weightDesc{color:var(--muted);font-size:11px;line-height:1.45;margin:4px 0 6px;min-height:32px}.weightRow input[type="range"]{padding:0;min-height:34px;border:0;background:transparent}.weightTotal{font-weight:800}.presetRow{display:flex;gap:8px;flex-wrap:wrap}.presetRow .btn{font-size:12px;min-height:36px;padding:7px 10px;transition:background-color .15s ease,border-color .15s ease,color .15s ease}.presetHint{margin-top:7px}
 .advGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:10px}.adv{border:1px solid var(--line);background:var(--panel3);border-radius:10px;padding:8px}.adv b{display:block;font-size:16px}.adv span{font-size:10px;color:var(--muted)}
 .sourceList{margin:10px 0 0;padding-left:18px;color:var(--muted)}.sourceList li{margin:5px 0}.foot{margin-top:16px;color:var(--muted);font-size:11px}
 .loading,.empty{padding:28px;text-align:center;color:var(--muted)}.err{color:var(--danger)}
@@ -130,7 +130,8 @@ table{width:100%;border-collapse:collapse;min-width:940px}th,td{padding:10px 11p
   <section id="weights" class="panel">
     <div class="card weightBox">
       <div class="weightHeader"><div><h3 data-i18n="weightTitle">自訂歷史地位權重</h3><div class="meta" data-i18n="weightIntro">調整後 Top 100 與兩兩比較會即時重算。權重總和不必剛好 100，模型會自動正規化。</div></div><div class="weightTotal"><span data-i18n="weightTotal">目前總權重</span>：<span id="weightTotal">100</span></div></div>
-      <div class="presetRow"><button class="btn primary" data-preset="default" data-i18n="presetDefault">預設平衡</button><button class="btn" data-preset="peak" data-i18n="presetPeak">巔峰優先</button><button class="btn" data-preset="playoff" data-i18n="presetPlayoff">季後賽優先</button><button class="btn" data-preset="longevity" data-i18n="presetLongevity">長期累積優先</button></div>
+      <div class="presetRow"><button class="btn primary" data-preset="default" data-i18n="presetDefault" aria-pressed="true">預設平衡</button><button class="btn" data-preset="peak" data-i18n="presetPeak" aria-pressed="false">巔峰優先</button><button class="btn" data-preset="playoff" data-i18n="presetPlayoff" aria-pressed="false">季後賽優先</button><button class="btn" data-preset="longevity" data-i18n="presetLongevity" aria-pressed="false">長期累積優先</button></div>
+      <div class="meta presetHint" data-i18n="presetHint">藍底表示目前套用的模式；手動調整後也會依實際數值自動更新。</div>
       <div class="weightRows" id="weightRows" style="margin-top:12px"></div>
     </div>
   </section>
@@ -160,6 +161,13 @@ Object.assign(I18N.en,{
  era4:'2025-26 PER / WS / WS/48 / BPM / VORP are context only and are not scored. Differences below one point should not be read as a definitive separation.',
  compareSearchPlaceholder:'Type a player name to search…',
  noPlayerMatches:'No matching players',
+ presetHint:'The blue button shows the active preset; manual adjustments update the state automatically.',
+ weightDescPeak:'Values the highest level of play represented by MVP and All-NBA honors.',
+ weightDescPlayoff:'Values Finals MVPs, championships and the estimated importance of each title role.',
+ weightDescSustained:'Values long-term All-NBA and All-Star recognition.',
+ weightDescDefense:'Values DPOY awards and All-Defensive Team honors.',
+ weightDescLongevity:'Values the number of NBA / ABA / BAA seasons sustained.',
+ weightDescProduction:'Values career scoring, rebounding, assists, steals and blocks.',
  foot:'Sources: public Basketball-Reference-derived datasets, corrected against NBA.com award and player championship records. Latest audit: 2026-08-26.'
 });
 Object.assign(I18N['zh-Hant'],{
@@ -172,6 +180,13 @@ Object.assign(I18N['zh-Hant'],{
  era4:'2025-26 PER / WS / WS/48 / BPM / VORP 僅作資訊展示，不納入總分；差距小於 1 分時不應解讀為明確高下。',
  compareSearchPlaceholder:'輸入球員姓名搜尋…',
  noPlayerMatches:'沒有符合的球員',
+ presetHint:'藍底表示目前套用的模式；手動調整後也會依實際數值自動更新。',
+ weightDescPeak:'重視 MVP 與 All-NBA 所代表的最高峰表現。',
+ weightDescPlayoff:'重視 FMVP、冠軍數與每次奪冠的核心程度。',
+ weightDescSustained:'重視長期入選 All-NBA 與 All-Star 的履歷。',
+ weightDescDefense:'重視 DPOY 與最佳防守陣容履歷。',
+ weightDescLongevity:'重視維持 NBA／ABA／BAA 生涯的賽季長度。',
+ weightDescProduction:'重視生涯得分、籃板、助攻、抄截與阻攻產量。',
  foot:'資料來源：公開 Basketball-Reference 衍生資料集，另依 NBA.com 公開獎項與球員冠軍履歷校正。最新審計：2026-08-26。'
 });
 Object.assign(I18N['zh-Hans'],{
@@ -184,10 +199,23 @@ Object.assign(I18N['zh-Hans'],{
  era4:'2025-26 PER / WS / WS/48 / BPM / VORP 仅作信息展示，不纳入总分；差距小于 1 分时不应解读为明确高下。',
  compareSearchPlaceholder:'输入球员姓名搜索…',
  noPlayerMatches:'没有符合的球员',
+ presetHint:'蓝底表示当前套用的模式；手动调整后也会按实际数值自动更新。',
+ weightDescPeak:'重视 MVP 与 All-NBA 所代表的最高峰表现。',
+ weightDescPlayoff:'重视 FMVP、冠军数与每次夺冠的核心程度。',
+ weightDescSustained:'重视长期入选 All-NBA 与 All-Star 的履历。',
+ weightDescDefense:'重视 DPOY 与最佳防守阵容履历。',
+ weightDescLongevity:'重视维持 NBA／ABA／BAA 生涯的赛季长度。',
+ weightDescProduction:'重视生涯得分、篮板、助攻、抢断与盖帽产量。',
  foot:'数据来源：公开 Basketball-Reference 衍生数据集，另依据 NBA.com 公开奖项与球员冠军履历校正。最新审计：2026-08-26。'
 });
 let lang='zh-Hant';
 const defaultWeights={peak:25,playoff:25,sustained:20,defense:10,longevity:10,production:10};
+const presetWeights={
+ default:defaultWeights,
+ peak:{peak:40,playoff:20,sustained:15,defense:8,longevity:7,production:10},
+ playoff:{peak:20,playoff:40,sustained:15,defense:8,longevity:7,production:10},
+ longevity:{peak:15,playoff:15,sustained:25,defense:10,longevity:25,production:10}
+};
 let weights={...defaultWeights},players=[],sorted=[],top100=[],page=1,pageSize=50,advancedLoaded=false;
 const compareSelection={p1Search:null,p2Search:null};
 function t(k){return (I18N[lang]&&I18N[lang][k])||I18N['en'][k]||k}
@@ -259,8 +287,10 @@ function renderCompare(){if(!players.length)return;const a=players.find(p=>Strin
  document.getElementById('rawBody').innerHTML=rows.map(([label,k])=>`<tr><td>${esc(label)}</td><td>${formatVal(a[k],k)}</td><td>${formatVal(b[k],k)}</td></tr>`).join('')
 }
 function formatVal(v,k){if(v===null||v===undefined)return '—';if(['ppg','rpg','apg','per','ws','bpm','vorp'].includes(k))return Number(v).toFixed(1);if(k==='ws48')return Number(v).toFixed(3);return esc(v)}
-function renderWeightRows(){const labels={peak:t('peak'),playoff:t('playoff'),sustained:t('sustained'),defense:t('defense'),longevity:t('longevity'),production:t('production')};document.getElementById('weightRows').innerHTML=Object.keys(weights).map(k=>`<div class="weightRow"><div class="weightRowTop"><b>${esc(labels[k])}</b><span>${weights[k]}</span></div><input type="range" min="0" max="50" step="1" value="${weights[k]}" data-weight="${k}" aria-label="${esc(labels[k])}"></div>`).join('');document.getElementById('weightTotal').textContent=Object.values(weights).reduce((a,b)=>a+b,0);document.querySelectorAll('[data-weight]').forEach(el=>el.addEventListener('input',e=>{weights[e.target.dataset.weight]=num(e.target.value);rescore()}))}
-function setPreset(name){if(name==='default')weights={...defaultWeights};if(name==='peak')weights={peak:40,playoff:20,sustained:15,defense:8,longevity:7,production:10};if(name==='playoff')weights={peak:20,playoff:40,sustained:15,defense:8,longevity:7,production:10};if(name==='longevity')weights={peak:15,playoff:15,sustained:25,defense:10,longevity:25,production:10};rescore()}
+function activePreset(){return Object.entries(presetWeights).find(([,preset])=>Object.keys(weights).every(k=>weights[k]===preset[k]))?.[0]||null}
+function renderPresetState(){const active=activePreset();document.querySelectorAll('[data-preset]').forEach(button=>{const selected=button.dataset.preset===active;button.classList.toggle('primary',selected);button.setAttribute('aria-pressed',String(selected))})}
+function renderWeightRows(){const labels={peak:t('peak'),playoff:t('playoff'),sustained:t('sustained'),defense:t('defense'),longevity:t('longevity'),production:t('production')};const descriptions={peak:t('weightDescPeak'),playoff:t('weightDescPlayoff'),sustained:t('weightDescSustained'),defense:t('weightDescDefense'),longevity:t('weightDescLongevity'),production:t('weightDescProduction')};document.getElementById('weightRows').innerHTML=Object.keys(weights).map(k=>`<div class="weightRow"><div class="weightRowTop"><b>${esc(labels[k])}</b><span>${weights[k]}</span></div><div class="weightDesc">${esc(descriptions[k])}</div><input type="range" min="0" max="50" step="1" value="${weights[k]}" data-weight="${k}" aria-label="${esc(labels[k])}"></div>`).join('');document.getElementById('weightTotal').textContent=Object.values(weights).reduce((a,b)=>a+b,0);renderPresetState();document.querySelectorAll('[data-weight]').forEach(el=>el.addEventListener('input',e=>{weights[e.target.dataset.weight]=num(e.target.value);rescore()}))}
+function setPreset(name){if(!presetWeights[name])return;weights={...presetWeights[name]};rescore()}
 function applyLanguage(){document.documentElement.lang=lang;document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n;if(I18N[lang][k]!==undefined)el.textContent=I18N[lang][k]});document.querySelectorAll('[data-ph]').forEach(el=>el.placeholder=t(el.dataset.ph));document.querySelectorAll('.langbtn').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));document.getElementById('footText').textContent=t('foot');updateStatus();renderRank();renderCompare();renderWeightRows()}
 // events
 document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.getElementById(btn.dataset.tab).classList.add('active')}));
