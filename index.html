@@ -232,17 +232,8 @@ async function applyAdvanced2026(){
 }
 async function load(){
  try{
-  const [career,avg,teams,awards,stars,champs]=await Promise.all([URLS.career,URLS.avg,URLS.teams,URLS.awards,URLS.stars,URLS.champs].map(get));
-  const byId=new Map(),byName=new Map();
-  career.forEach(r=>{const p={id:String(r.player_id),name:r.player,seasons:num(r.num_seasons),first_seas:num(r.first_seas),last_seas:num(r.last_seas),ppg:0,apg:0,rpg:0,spg:0,bpg:0,mvp:0,fmvp:0,champs:0,nba1:0,nba2:0,nba3:0,def1:0,def2:0,dpoy:0,allstar:0,per:null,ws:null,ws48:null,bpm:null,vorp:null};byId.set(String(r.player_id),p);if(!byName.has(norm(p.name)))byName.set(norm(p.name),p)});
-  avg.forEach(r=>{const p=byId.get(String(r.player_id));if(p)Object.assign(p,{ppg:num(r.ppg),apg:num(r.apg),rpg:num(r.rpg),spg:num(r.spg),bpg:num(r.bpg)})});
-  teams.forEach(r=>{const p=byId.get(String(r.player_id));if(p)Object.assign(p,{nba1:num(r['All-NBA 1st Team']),nba2:num(r['All-NBA 2nd Team']),nba3:num(r['All-NBA 3rd Team']),def1:num(r['All-Defense 1st Team']),def2:num(r['All-Defense 2nd Team'])})});
-  awards.forEach(r=>{const p=byId.get(String(r.player_id));if(p)Object.assign(p,{mvp:num(r['nba mvp']),dpoy:num(r.dpoy)})});
-  stars.forEach(r=>{const p=byName.get(norm(r.player));if(p)p.allstar=num(r.AllStarCount)});
-  players=[...byId.values()];const buckets=new Map();players.forEach(p=>{const k=norm(p.name);if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(p)});
-  champs.forEach(r=>{const list=buckets.get(norm(r.player))||[];const p=list.find(x=>x.first_seas===num(r.first_seas))||list[0];if(p){p.fmvp=num(r['Finals MVP']);p.champs=num(r.Championships)}});
-  ensureFallbackRookies();applyRecent();await applyAdvanced2026();
-  // apply 2026 season length to fallback rookies and active players not found in advanced only when known recent lists identify them
+  const response=await fetch('./players.json',{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);
+  players=await response.json();advancedLoaded=players.some(p=>p.per!==null||p.ws!==null||p.bpm!==null||p.vorp!==null);
   rescore();populateCompare();updateStatus();
  }catch(e){document.getElementById('dataBadge').textContent=t('loadFail');document.getElementById('status').innerHTML='<span class="err">'+esc(t('loadFail'))+': '+esc(e.message)+'</span>';document.getElementById('rankBody').innerHTML='<tr><td colspan="10" class="empty err">'+esc(t('loadFail'))+'</td></tr>';document.getElementById('mobileRank').innerHTML='<div class="empty err">'+esc(t('loadFail'))+'</div>'}
 }
