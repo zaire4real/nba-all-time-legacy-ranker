@@ -11,9 +11,9 @@ from pathlib import Path
 
 
 WEIGHT_SETS = {
-    "legacy_default": {"peak_v3": 25, "career_v3": 25, "playoff_v3": 20, "recognition_v3": 10, "championship_v3": 10, "durability_v3": 10},
+    "legacy_default": {"peak_v3": 27, "career_v3": 28, "playoff_v3": 25, "recognition_v3": 8, "championship_v3": 5, "durability_v3": 7},
     "individual_impact": {"peak_v3": 40, "career_v3": 35, "playoff_v3": 25, "recognition_v3": 0, "championship_v3": 0, "durability_v3": 0},
-    "resume": {"peak_v3": 20, "career_v3": 15, "playoff_v3": 20, "recognition_v3": 20, "championship_v3": 20, "durability_v3": 5},
+    "awards_and_titles": {"peak_v3": 20, "career_v3": 15, "playoff_v3": 20, "recognition_v3": 20, "championship_v3": 20, "durability_v3": 5},
     "longevity": {"peak_v3": 20, "career_v3": 30, "playoff_v3": 15, "recognition_v3": 10, "championship_v3": 10, "durability_v3": 15},
 }
 
@@ -49,6 +49,9 @@ def main() -> None:
             assert isfinite(value) and 0 <= value <= 100
         assert 0 <= float(player["data_coverage"]) <= 1
         assert float(player["model_uncertainty"]) >= 0
+        assert 1 <= int(player["weight_rank_low"]) <= int(player["weight_rank_median"]) <= int(player["weight_rank_high"]) <= len(players)
+        assert 0 <= float(player["top100_probability"]) <= 1
+        assert int(player["weight_sample_count"]) == 800
         assert int(player["fmvp"]) <= int(player["champs"]) <= int(player["seasons"])
 
     # Monotonicity: improving the input while holding everything else fixed
@@ -82,13 +85,14 @@ def main() -> None:
     assert abs(float(nash["peak_v3"]) - float(kawhi["peak_v3"])) < 1
     assert float(kawhi["playoff_v3"]) > float(nash["playoff_v3"])
     assert bands_overlap
+    assert max(int(nash["weight_rank_low"]), int(kawhi["weight_rank_low"])) <= min(int(nash["weight_rank_high"]), int(kawhi["weight_rank_high"]))
 
     barbosa = lookup["Leandro Barbosa"]
     assert (barbosa["mvp"], barbosa["fmvp"], barbosa["champs"], barbosa["nba1"]) == (0, 0, 1, 0)
     assert score(lookup["Robert Horry"], WEIGHT_SETS["legacy_default"]) < 50
 
     report = {
-        "model": "v3",
+        "model": "v3.1",
         "players": len(players),
         "playoff_rows": len(playoffs),
         "playoff_seasons": [min(int(row["season"]) for row in playoffs), max(int(row["season"]) for row in playoffs)],
@@ -98,8 +102,13 @@ def main() -> None:
             "peak_gap": round(float(kawhi["peak_v3"]) - float(nash["peak_v3"]), 2),
             "total_gap": round(kawhi_total - nash_total, 2),
             "uncertainty_bands_overlap": bands_overlap,
+            "weight_rank_intervals": {
+                "Steve Nash": [nash["weight_rank_low"], nash["weight_rank_high"]],
+                "Kawhi Leonard": [kawhi["weight_rank_low"], kawhi["weight_rank_high"]],
+            },
         },
-        "checks": ["ranges", "unique_ids", "complete_playoff_years", "championship_monotonicity", "weight_sensitivity", "known-record regression"],
+        "weight_robustness_samples": int(players[0]["weight_sample_count"]),
+        "checks": ["ranges", "unique_ids", "complete_playoff_years", "championship_monotonicity", "bounded_weight_sampling", "weight_sensitivity", "known-record regression"],
         "status": "passed",
     }
     if args.report:

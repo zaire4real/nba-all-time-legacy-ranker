@@ -8,6 +8,7 @@ from bisect import bisect_left, bisect_right
 import csv
 import json
 from math import sqrt
+import random
 import re
 from statistics import fmean
 import unicodedata
@@ -304,7 +305,10 @@ def build_model_v3(
             reliability = sqrt(min(1.0, games / max_games) * max(0.10, minutes_factor))
             shrunk_rate = 50 + (raw_rate - 50) * reliability
             run_share = min(1.0, games / max_games) * minutes_factor
-            season_score = 0.80 * shrunk_rate + 0.20 * run_share * 100
+            # Run depth affects reliability and career accumulation, but does
+            # not directly add points to the per-run performance rate. This
+            # avoids rewarding team advancement here and again in titles.
+            season_score = shrunk_rate
             playoff_scored.append(
                 {
                     "name": str(row.get("name") or ""),
@@ -451,6 +455,61 @@ def build_model_v3(
 
     if unmatched_playoff_rows > max(100, len(playoff_scored) * 0.05):
         raise RuntimeError(f"Too many unmatched playoff rows: {unmatched_playoff_rows}/{len(playoff_scored)}")
+
+
+def add_weight_robustness(players: dict[str, dict[str, object]], sample_count: int = 800) -> None:
+    """Estimate rank stability across a disclosed family of plausible weights.
+
+    Sampling is deterministic. A bounded Dirichlet distribution varies the
+    value judgments around the default without allowing implausible extremes.
+    The resulting 10th–90th percentile is a weight-sensitivity interval, not a
+    statistical confidence interval for player ability.
+    """
+
+    fields = ("peak_v3", "career_v3", "playoff_v3", "recognition_v3", "championship_v3", "durability_v3")
+    centers = (27.0, 28.0, 25.0, 8.0, 5.0, 7.0)
+    bounds = ((20, 33), (20, 35), (17, 32), (3, 16), (2, 13), (3, 15))
+    rng = random.Random(20260827)
+    samples: list[tuple[float, ...]] = [centers]
+    attempts = 0
+    concentration = 65
+    while len(samples) < sample_count and attempts < sample_count * 500:
+        attempts += 1
+        raw = [rng.gammavariate(center / 100 * concentration, 1.0) for center in centers]
+        total = sum(raw)
+        weights = tuple(value / total * 100 for value in raw)
+        if all(low <= value <= high for value, (low, high) in zip(weights, bounds)):
+            samples.append(weights)
+    if len(samples) != sample_count:
+        raise RuntimeError(f"Could only produce {len(samples)} bounded weight samples")
+
+    rank_samples: dict[str, list[int]] = {player_id: [] for player_id in players}
+    for weights in samples:
+        ranked = sorted(
+            players.items(),
+            key=lambda item: (
+                -sum(float(item[1][field]) * weight for field, weight in zip(fields, weights)),
+                str(item[1]["name"]),
+            ),
+        )
+        for rank, (player_id, _) in enumerate(ranked, 1):
+            rank_samples[player_id].append(rank)
+
+    def quantile(values: list[int], proportion: float) -> int:
+        ordered = sorted(values)
+        return ordered[round((len(ordered) - 1) * proportion)]
+
+    for player_id, player in players.items():
+        ranks = rank_samples[player_id]
+        player.update(
+            {
+                "weight_rank_median": quantile(ranks, 0.50),
+                "weight_rank_low": quantile(ranks, 0.10),
+                "weight_rank_high": quantile(ranks, 0.90),
+                "top100_probability": round(sum(rank <= 100 for rank in ranks) / len(ranks), 3),
+                "weight_sample_count": len(ranks),
+            }
+        )
 
 
 def main() -> None:
@@ -675,6 +734,7 @@ def main() -> None:
 
     playoff_rows = json.loads(args.playoffs.read_text(encoding="utf-8"))
     build_model_v3(players, total_rows, advanced_rows, team_rows, award_rows, star_rows, team_summary_rows, playoff_rows)
+    add_weight_robustness(players)
 
     output = sorted(players.values(), key=lambda player: (str(player["name"]), str(player["id"])))
     args.output.write_text(json.dumps(output, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
@@ -711,6 +771,10 @@ def main() -> None:
         assert 0 <= float(player["defense_award_coverage"]) <= 1
         assert 0 <= float(player["data_coverage"]) <= 1
         assert player["confidence_grade"] in {"A", "B", "C", "D"}
+        assert 1 <= int(player["weight_rank_low"]) <= int(player["weight_rank_high"]) <= len(output)
+        assert int(player["weight_rank_low"]) <= int(player["weight_rank_median"]) <= int(player["weight_rank_high"])
+        assert 0 <= float(player["top100_probability"]) <= 1
+        assert int(player["weight_sample_count"]) == 800
         assert float(player["full_season_equiv"]) <= int(player["seasons"]) + 0.01
     nash = lookup["stevenash"]
     kawhi = lookup["kawhileonard"]

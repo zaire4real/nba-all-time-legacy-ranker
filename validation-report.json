@@ -1,5 +1,5 @@
 {
-  "model": "v3",
+  "model": "v3.1",
   "players": 5416,
   "playoff_rows": 11529,
   "playoff_seasons": [
@@ -14,20 +14,32 @@
   },
   "top100_overlap_vs_default": {
     "legacy_default": 100,
-    "individual_impact": 90,
-    "resume": 91,
-    "longevity": 96
+    "individual_impact": 95,
+    "awards_and_titles": 87,
+    "longevity": 92
   },
   "nash_kawhi": {
     "peak_gap": 0.58,
-    "total_gap": 1.45,
-    "uncertainty_bands_overlap": true
+    "total_gap": 0.81,
+    "uncertainty_bands_overlap": true,
+    "weight_rank_intervals": {
+      "Steve Nash": [
+        47,
+        50
+      ],
+      "Kawhi Leonard": [
+        43,
+        51
+      ]
+    }
   },
+  "weight_robustness_samples": 800,
   "checks": [
     "ranges",
     "unique_ids",
     "complete_playoff_years",
     "championship_monotonicity",
+    "bounded_weight_sampling",
     "weight_sensitivity",
     "known-record regression"
   ],
