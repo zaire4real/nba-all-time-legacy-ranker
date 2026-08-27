@@ -74,7 +74,7 @@ def percentile_against(values: list[float], value: float | None) -> float | None
     return 100 * (left + (right - left) / 2) / len(values)
 
 
-def build_model_v2(
+def build_model_v3(
     players: dict[str, dict[str, object]],
     total_rows: list[dict[str, str]],
     advanced_rows: list[dict[str, str]],
@@ -82,14 +82,18 @@ def build_model_v2(
     award_rows: list[dict[str, str]],
     star_rows: list[dict[str, str]],
     team_summary_rows: list[dict[str, str]],
+    playoff_rows: list[dict[str, object]],
 ) -> None:
-    """Add era-normalized, season-level Model v2 component scores.
+    """Add era-normalized season-level Model v2 and v3 component scores.
 
     Peak uses the best three season scores and no awards. Season scores combine
     within-league percentiles for impact rate, value volume, box production and
     availability. Other categories use non-overlapping season credits where
     possible, which avoids counting MVP + All-NBA + All-Star three times in the
-    same year.
+    same year. Model v3 separates regular-season peak, career impact, actual
+    playoff performance, recognition, championship contribution and durability.
+    This prevents an MVP, All-NBA berth and championship from being silently
+    counted as three measurements of the same underlying thing.
     """
 
     total_groups: dict[tuple[str, int, str], list[dict[str, str]]] = defaultdict(list)
@@ -253,6 +257,81 @@ def build_model_v2(
     for record in records:
         records_by_player[str(record["player_id"])].append(record)
 
+    # Actual postseason performance, normalized within each postseason so that
+    # raw pace and scoring environments do not decide cross-era comparisons.
+    playoff_by_season: dict[int, list[dict[str, object]]] = defaultdict(list)
+    for row in playoff_rows:
+        if integer(str(row.get("gp") or 0)) > 0:
+            playoff_by_season[integer(str(row.get("season") or 0))].append(row)
+
+    playoff_scored: list[dict[str, object]] = []
+    playoff_metric_weights = {"pts": 0.38, "trb": 0.18, "ast": 0.24, "blk": 0.08, "fg_pct": 0.12}
+    for season, cohort in playoff_by_season.items():
+        max_games = max(number(str(row.get("gp") or 0)) for row in cohort)
+        qualified = [
+            row
+            for row in cohort
+            if number(str(row.get("gp") or 0)) >= max(3, max_games * 0.20)
+            and (row.get("mpg") is None or number(str(row.get("mpg"))) >= 10)
+        ]
+        if len(qualified) < 10:
+            qualified = cohort
+        distributions: dict[str, list[float]] = {}
+        for metric in playoff_metric_weights:
+            adjusted = f"{metric}_adj"
+            values = [
+                number(str(row.get(adjusted) if row.get(adjusted) is not None else row.get(metric)))
+                for row in qualified
+                if row.get(adjusted) is not None or row.get(metric) is not None
+            ]
+            distributions[metric] = sorted(values)
+
+        for row in cohort:
+            component_values: list[tuple[float, float]] = []
+            for metric, weight in playoff_metric_weights.items():
+                adjusted = f"{metric}_adj"
+                raw = row.get(adjusted) if row.get(adjusted) is not None else row.get(metric)
+                percentile = percentile_against(distributions[metric], optional_number(str(raw)) if raw is not None else None)
+                if percentile is not None:
+                    component_values.append((percentile, weight))
+            if not component_values:
+                continue
+            weight_total = sum(weight for _, weight in component_values)
+            raw_rate = sum(value * weight for value, weight in component_values) / weight_total
+            games = number(str(row.get("gp") or 0))
+            minutes = optional_number(str(row.get("mpg"))) if row.get("mpg") is not None else None
+            minutes_factor = min(1.0, minutes / 32) if minutes is not None else 1.0
+            reliability = sqrt(min(1.0, games / max_games) * max(0.10, minutes_factor))
+            shrunk_rate = 50 + (raw_rate - 50) * reliability
+            run_share = min(1.0, games / max_games) * minutes_factor
+            season_score = 0.80 * shrunk_rate + 0.20 * run_share * 100
+            playoff_scored.append(
+                {
+                    "name": str(row.get("name") or ""),
+                    "season": season,
+                    "gp": games,
+                    "score": max(0.0, min(100.0, season_score)),
+                    "run_share": run_share,
+                    "metric_coverage": weight_total,
+                }
+            )
+
+    players_by_name: dict[str, list[str]] = defaultdict(list)
+    for player_id, player in players.items():
+        players_by_name[norm(str(player["name"]))].append(player_id)
+    playoff_by_player: dict[str, list[dict[str, object]]] = defaultdict(list)
+    unmatched_playoff_rows = 0
+    for record in playoff_scored:
+        candidates = [
+            player_id
+            for player_id in players_by_name.get(norm(str(record["name"])), [])
+            if int(players[player_id]["first_seas"]) <= int(record["season"]) <= int(players[player_id]["last_seas"])
+        ]
+        if len(candidates) == 1:
+            playoff_by_player[candidates[0]].append(record)
+        else:
+            unmatched_playoff_rows += 1
+
     for player_id, player in players.items():
         best_by_year: dict[int, dict[str, object]] = {}
         for record in records_by_player.get(player_id, []):
@@ -267,6 +346,16 @@ def build_model_v2(
         peak_coverage = fmean(float(record["advanced_coverage"]) for record in top_peak) if top_peak else 0
 
         full_season_equiv = sum(float(record["availability"]) for record in career_records)
+        career_impact_credits = sum(
+            max(0.0, (float(record["season_score"]) - 50) / 50) * float(record["availability"])
+            for record in career_records
+        )
+        career_advanced_coverage = (
+            sum(float(record["advanced_coverage"]) * float(record["availability"]) for record in career_records)
+            / full_season_equiv
+            if full_season_equiv
+            else 0
+        )
         production_credits = sum(
             max(0.0, (float(record["production_pct"]) - 50) / 50) * float(record["availability"])
             for record in career_records
@@ -304,9 +393,32 @@ def build_model_v2(
         defense_award_coverage = award_eligible_equiv / full_season_equiv if full_season_equiv else 0
         defense_credits = award_defense_credits if defense_award_coverage >= 0.5 else hybrid_defense_credits
 
+        player_playoffs = playoff_by_player.get(player_id, [])
+        top_playoffs = sorted(player_playoffs, key=lambda record: float(record["score"]), reverse=True)[:3]
+        playoff_peak_percentile = fmean(float(record["score"]) for record in top_playoffs) if top_playoffs else 50
+        playoff_peak = max(0.0, min(100.0, (playoff_peak_percentile - 50) * 2)) if top_playoffs else 0
+        playoff_performance_credits = sum(
+            max(0.0, (float(record["score"]) - 50) / 50) * float(record["run_share"])
+            for record in player_playoffs
+        )
+        playoff_accumulation = min(100.0, playoff_performance_credits / 7.5 * 100)
+        playoff_score_v3 = 0.65 * playoff_peak + 0.35 * playoff_accumulation
+        playoff_games = sum(float(record["gp"]) for record in player_playoffs)
+
+        non_fmvp_titles = max(0, int(player["champs"]) - int(player["fmvp"]))
+        championship_credits_v3 = int(player["fmvp"]) + non_fmvp_titles * (0.10 + 0.55 * playoff_score_v3 / 100)
+        championship_score_v3 = min(100.0, championship_credits_v3 / 4 * 100)
+
+        observable_playoff_years = max(0, int(player["last_seas"]) - max(1950, int(player["first_seas"])) + 1)
+        playoff_year_coverage = min(1.0, observable_playoff_years / max(1, int(player["seasons"])))
+        data_coverage = min(1.0, 0.55 * career_advanced_coverage + 0.20 * peak_coverage + 0.25 * playoff_year_coverage)
+        confidence_grade = "A" if data_coverage >= 0.85 else "B" if data_coverage >= 0.65 else "C" if data_coverage >= 0.40 else "D"
+        model_uncertainty = 0.75 + 5 * (1 - data_coverage)
+
         player.update(
             {
                 "peak_v2": round(min(100.0, peak_score), 2),
+                "peak_v3": round(min(100.0, peak_score), 2),
                 "peak_years": peak_years,
                 "peak_coverage": round(peak_coverage, 3),
                 "playoff_v2": round(min(100.0, playoff_credits / 4 * 100), 2),
@@ -320,8 +432,25 @@ def build_model_v2(
                 "full_season_equiv": round(full_season_equiv, 2),
                 "production_v2": round(min(100.0, production_credits / 12 * 100), 2),
                 "production_credits": round(production_credits, 3),
+                "career_v3": round(min(100.0, career_impact_credits / 14 * 100), 2),
+                "career_impact_credits": round(career_impact_credits, 3),
+                "career_advanced_coverage": round(career_advanced_coverage, 3),
+                "playoff_v3": round(playoff_score_v3, 2),
+                "playoff_peak_years": sorted(int(record["season"]) for record in top_playoffs),
+                "playoff_games": int(round(playoff_games)),
+                "playoff_performance_credits": round(playoff_performance_credits, 3),
+                "recognition_v3": round(sustained_score, 2),
+                "championship_v3": round(championship_score_v3, 2),
+                "championship_credits_v3": round(championship_credits_v3, 3),
+                "durability_v3": round(min(100.0, full_season_equiv / 18 * 100), 2),
+                "data_coverage": round(data_coverage, 3),
+                "confidence_grade": confidence_grade,
+                "model_uncertainty": round(model_uncertainty, 2),
             }
         )
+
+    if unmatched_playoff_rows > max(100, len(playoff_scored) * 0.05):
+        raise RuntimeError(f"Too many unmatched playoff rows: {unmatched_playoff_rows}/{len(playoff_scored)}")
 
 
 def main() -> None:
@@ -329,6 +458,7 @@ def main() -> None:
     parser.add_argument("archive", type=Path)
     parser.add_argument("legacy_dir", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--playoffs", type=Path, required=True)
     args = parser.parse_args()
 
     with zipfile.ZipFile(args.archive) as archive:
@@ -543,7 +673,8 @@ def main() -> None:
         player["bpm"] = number(row.get("bpm")) if row.get("bpm") not in {"", "NA", None} else None
         player["vorp"] = number(row.get("vorp")) if row.get("vorp") not in {"", "NA", None} else None
 
-    build_model_v2(players, total_rows, advanced_rows, team_rows, award_rows, star_rows, team_summary_rows)
+    playoff_rows = json.loads(args.playoffs.read_text(encoding="utf-8"))
+    build_model_v3(players, total_rows, advanced_rows, team_rows, award_rows, star_rows, team_summary_rows, playoff_rows)
 
     output = sorted(players.values(), key=lambda player: (str(player["name"]), str(player["id"])))
     args.output.write_text(json.dumps(output, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
@@ -570,17 +701,24 @@ def main() -> None:
         assert int(player["first_seas"]) <= int(player["last_seas"])
         assert int(player["fmvp"]) <= int(player["champs"])
         assert int(player["champs"]) <= int(player["seasons"])
-        for field in ("peak_v2", "playoff_v2", "sustained_v2", "defense_v2", "longevity_v2", "production_v2"):
+        for field in (
+            "peak_v2", "playoff_v2", "sustained_v2", "defense_v2", "longevity_v2", "production_v2",
+            "career_v3", "playoff_v3", "recognition_v3", "championship_v3", "durability_v3",
+        ):
             assert 0 <= float(player[field]) <= 100
         assert len(player["peak_years"]) <= 3
         assert 0 <= float(player["peak_coverage"]) <= 1
         assert 0 <= float(player["defense_award_coverage"]) <= 1
+        assert 0 <= float(player["data_coverage"]) <= 1
+        assert player["confidence_grade"] in {"A", "B", "C", "D"}
         assert float(player["full_season_equiv"]) <= int(player["seasons"]) + 0.01
     nash = lookup["stevenash"]
     kawhi = lookup["kawhileonard"]
     russell = lookup["billrussell"]
     assert abs(float(nash["peak_v2"]) - float(kawhi["peak_v2"])) < 5
     assert float(kawhi["playoff_v2"]) > float(nash["playoff_v2"])
+    assert float(kawhi["playoff_v3"]) > float(nash["playoff_v3"])
+    assert int(nash["playoff_games"]) > 100 and int(kawhi["playoff_games"]) > 100
     assert float(russell["defense_v2"]) > 0 and float(russell["defense_award_coverage"]) < 0.5
     print(json.dumps({"players": len(output), "barbosa": barbosa, "lebron": lebron}, ensure_ascii=False, indent=2))
 
